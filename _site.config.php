@@ -8,8 +8,9 @@ if (!defined('_GNUBOARD_')) {
 }
 
 $site_config = array(
-    'site_name'           => '샘플 사이트',
-    'site_desc'           => '빌더 디자인 적용이 쉬운 그누보드 베이스 템플릿',
+    'site_name'           => '마간다TV',
+    'site_desc'           => '필리핀 라이브 스트리밍 플랫폼',
+    'home_builder_bridge_id' => 'maganda',
     'company_name'        => '회사명',
     'ceo_name'            => '대표자명',
     'business_no'         => '000-00-00000',

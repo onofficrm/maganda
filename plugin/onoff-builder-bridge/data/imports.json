@@ -1,5 +1,12 @@
 [
   {
+    "id": "maganda",
+    "name": "마간다TV 메인",
+    "path": "maganda",
+    "entry": "index.html",
+    "created_at": "2026-06-04 23:30:00"
+  },
+  {
     "id": "sample-landing",
     "name": "[샘플] 랜딩 페이지 (비활성)",
     "path": "sample-landing",
