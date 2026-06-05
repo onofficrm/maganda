@@ -39,15 +39,21 @@ g5_page_start('Creator Application', 'minimal');
                 <div class="mg-creator-form__grid">
                     <div class="mg-creator-form__row">
                         <label for="ca_name">Full Name <span class="mg-creator-form__req">*</span></label>
-                        <input type="text" id="ca_name" name="name" required autocomplete="name" placeholder="Your name">
+                        <div class="mg-creator-field">
+                            <input type="text" id="ca_name" name="name" required autocomplete="name" placeholder="Your name">
+                        </div>
                     </div>
                     <div class="mg-creator-form__row">
                         <label for="ca_email">Email <span class="mg-creator-form__req">*</span></label>
-                        <input type="email" id="ca_email" name="email" required autocomplete="email" placeholder="you@example.com">
+                        <div class="mg-creator-field">
+                            <input type="email" id="ca_email" name="email" required autocomplete="email" placeholder="you@example.com">
+                        </div>
                     </div>
                     <div class="mg-creator-form__row mg-creator-form__row--full">
                         <label for="ca_phone">Phone / WhatsApp <span class="mg-creator-form__req">*</span></label>
-                        <input type="text" id="ca_phone" name="phone" required autocomplete="tel" placeholder="+63 9XX XXX XXXX">
+                        <div class="mg-creator-field">
+                            <input type="text" id="ca_phone" name="phone" required autocomplete="tel" placeholder="+63 9XX XXX XXXX">
+                        </div>
                     </div>
                 </div>
 
@@ -55,27 +61,33 @@ g5_page_start('Creator Application', 'minimal');
                     <legend class="mg-creator-platforms__legend">Live Platforms</legend>
                     <p class="mg-creator-platforms__hint">Paste your channel or live URL. At least one platform is required.</p>
 
-                    <div class="mg-creator-platform">
-                        <div class="mg-creator-platform__icon mg-creator-platform__icon--yt" aria-hidden="true">YT</div>
-                        <div class="mg-creator-platform__body">
-                            <label for="ca_youtube">YouTube Channel or Live URL</label>
-                            <input type="url" id="ca_youtube" name="youtube" data-platform="youtube" placeholder="https://www.youtube.com/... or youtu.be/...">
+                    <div class="mg-creator-platform mg-creator-platform--youtube">
+                        <label for="ca_youtube" class="mg-creator-platform__label">YouTube</label>
+                        <div class="mg-creator-platform__input-wrap">
+                            <span class="mg-creator-platform__logo" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" rx="6" fill="#FF0000"/><path d="M10 8.5v7l5.5-3.5L10 8.5z" fill="#fff"/></svg>
+                            </span>
+                            <input type="url" id="ca_youtube" name="youtube" class="mg-creator-platform__input" data-platform="youtube" placeholder="youtube.com/... or youtu.be/..." autocomplete="url">
                         </div>
                     </div>
 
-                    <div class="mg-creator-platform">
-                        <div class="mg-creator-platform__icon mg-creator-platform__icon--tt" aria-hidden="true">TT</div>
-                        <div class="mg-creator-platform__body">
-                            <label for="ca_tiktok">TikTok Profile or Live URL</label>
-                            <input type="url" id="ca_tiktok" name="tiktok" data-platform="tiktok" placeholder="https://www.tiktok.com/@username">
+                    <div class="mg-creator-platform mg-creator-platform--tiktok">
+                        <label for="ca_tiktok" class="mg-creator-platform__label">TikTok</label>
+                        <div class="mg-creator-platform__input-wrap">
+                            <span class="mg-creator-platform__logo" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" rx="6" fill="#010101"/><path d="M16.5 8.2a3.4 3.4 0 0 0 2.2-2.2H15v8.8a2.1 2.1 0 1 1-2.1-2.1c.4 0 .8.1 1.1.3V12a3.6 3.6 0 1 0 3.1 3.6V9.8c.8.6 1.8.9 2.9.9V8.4c-1 0-2-.4-2.7-1.2z" fill="#25F4EE"/><path d="M16.5 7.8a3.4 3.4 0 0 0 2.2-2.2H15v8.8a2.1 2.1 0 1 1-2.1-2.1c.4 0 .8.1 1.1.3V11.6a3.6 3.6 0 1 0 3.1 3.6V9.4c.8.6 1.8.9 2.9.9V7c-1 0-2-.4-2.7-1.2z" fill="#FE2C55"/></svg>
+                            </span>
+                            <input type="url" id="ca_tiktok" name="tiktok" class="mg-creator-platform__input" data-platform="tiktok" placeholder="tiktok.com/@username" autocomplete="url">
                         </div>
                     </div>
 
-                    <div class="mg-creator-platform">
-                        <div class="mg-creator-platform__icon mg-creator-platform__icon--ig" aria-hidden="true">IG</div>
-                        <div class="mg-creator-platform__body">
-                            <label for="ca_instagram">Instagram Profile URL</label>
-                            <input type="url" id="ca_instagram" name="instagram" data-platform="instagram" placeholder="https://www.instagram.com/username">
+                    <div class="mg-creator-platform mg-creator-platform--instagram">
+                        <label for="ca_instagram" class="mg-creator-platform__label">Instagram</label>
+                        <div class="mg-creator-platform__input-wrap">
+                            <span class="mg-creator-platform__logo" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="mgIgGrad" x1="4" y1="22" x2="22" y2="4" gradientUnits="userSpaceOnUse"><stop stop-color="#FD5949"/><stop offset=".5" stop-color="#D6249F"/><stop offset="1" stop-color="#285AEB"/></linearGradient></defs><rect width="24" height="24" rx="6" fill="url(#mgIgGrad)"/><rect x="7" y="7" width="10" height="10" rx="3" stroke="#fff" stroke-width="1.5"/><circle cx="17.2" cy="6.8" r="1.1" fill="#fff"/><circle cx="12" cy="12" r="2.4" stroke="#fff" stroke-width="1.5"/></svg>
+                            </span>
+                            <input type="url" id="ca_instagram" name="instagram" class="mg-creator-platform__input" data-platform="instagram" placeholder="instagram.com/username" autocomplete="url">
                         </div>
                     </div>
                 </fieldset>
@@ -91,9 +103,11 @@ g5_page_start('Creator Application', 'minimal');
                     <a class="mg-creator-preview__link" id="previewLink" href="#" target="_blank" rel="noopener noreferrer" hidden>Open on platform</a>
                 </div>
 
-                <div class="mg-creator-form__row mg-creator-form__row--full" style="margin-top:1.15rem;">
+                <div class="mg-creator-form__row mg-creator-form__row--full mg-creator-form__row--message">
                     <label for="ca_message">About You &amp; Message</label>
-                    <textarea id="ca_message" name="message" rows="5" placeholder="Tell us about your content, streaming schedule, experience, and why you want to join."></textarea>
+                    <div class="mg-creator-field">
+                        <textarea id="ca_message" name="message" rows="5" placeholder="Tell us about your content, streaming schedule, experience, and why you want to join."></textarea>
+                    </div>
                 </div>
 
                 <p id="creatorApplyMsg" class="mg-creator-form__msg" aria-live="polite"></p>

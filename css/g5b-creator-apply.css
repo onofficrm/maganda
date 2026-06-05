@@ -119,53 +119,83 @@
 
 .mg-creator-form__row label {
   display: block;
-  margin-bottom: 0.4rem;
-  font-size: 0.875rem;
+  margin-bottom: 0.45rem;
+  font-size: 0.8125rem;
   font-weight: 600;
-  color: #1e293b;
+  color: #334155;
+  letter-spacing: -0.01em;
 }
 
 .mg-creator-form__req {
   color: #dc2626;
 }
 
-.mg-creator-form__row input,
-.mg-creator-form__row textarea {
+.mg-creator-field {
+  position: relative;
+}
+
+.mg-creator-field input,
+.mg-creator-field textarea,
+.mg-creator-platform__input {
   width: 100%;
-  padding: 0.85rem 1rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.75rem;
+  min-height: 3rem;
+  padding: 0.75rem 1rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 0.875rem;
   background: #fff;
   font: inherit;
   font-size: 0.9375rem;
-  color: #1e293b;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  color: #0f172a;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
-.mg-creator-form__row input:focus,
-.mg-creator-form__row textarea:focus {
+.mg-creator-field input::placeholder,
+.mg-creator-field textarea::placeholder,
+.mg-creator-platform__input::placeholder {
+  color: #94a3b8;
+}
+
+.mg-creator-field input:hover,
+.mg-creator-field textarea:hover,
+.mg-creator-platform__input-wrap:hover .mg-creator-platform__input {
+  border-color: #cbd5e1;
+}
+
+.mg-creator-field input:focus,
+.mg-creator-field textarea:focus,
+.mg-creator-platform__input:focus {
   outline: none;
   border-color: var(--mg-brand-start);
-  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.12);
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1);
+  background: #fff;
 }
 
-.mg-creator-form__row textarea {
+.mg-creator-field textarea {
   min-height: 140px;
+  padding-top: 0.85rem;
   resize: vertical;
+  line-height: 1.55;
+}
+
+.mg-creator-form__row--message {
+  margin-top: 1.15rem;
 }
 
 .mg-creator-platforms {
   margin: 1.5rem 0 0;
-  padding: 0;
-  border: 0;
+  padding: 1.15rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  background: linear-gradient(180deg, #fafbfc 0%, #f8fafc 100%);
 }
 
 .mg-creator-platforms__legend {
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.35rem;
   padding: 0;
-  font-size: 0.95rem;
+  font-size: 0.9375rem;
   font-weight: 800;
-  color: #1e293b;
+  color: #0f172a;
+  letter-spacing: -0.02em;
 }
 
 .mg-creator-platforms__hint {
@@ -176,39 +206,81 @@
 }
 
 .mg-creator-platform {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 0.75rem 1rem;
-  align-items: start;
-  margin-bottom: 0.85rem;
-  padding: 0.85rem 1rem;
-  border-radius: 0.85rem;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  margin-bottom: 0.75rem;
 }
 
-.mg-creator-platform__icon {
+.mg-creator-platform:last-child {
+  margin-bottom: 0;
+}
+
+.mg-creator-platform__label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #334155;
+  letter-spacing: -0.01em;
+}
+
+.mg-creator-platform__input-wrap {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 0.75rem;
-  font-size: 0.6875rem;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  color: #fff;
+  gap: 0.65rem;
+  padding: 0.35rem 0.35rem 0.35rem 0.45rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 0.875rem;
+  background: #fff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.mg-creator-platform__icon--yt { background: #ff0000; }
-.mg-creator-platform__icon--tt { background: #010101; }
-.mg-creator-platform__icon--ig {
-  background: linear-gradient(135deg, #f58529, #dd2a7b, #8134af);
+.mg-creator-platform__input-wrap:focus-within {
+  border-color: var(--platform-accent, var(--mg-brand-start));
+  box-shadow: 0 0 0 4px var(--platform-ring, rgba(124, 58, 237, 0.1));
 }
 
-.mg-creator-platform__body label {
-  margin-bottom: 0.35rem;
-  font-size: 0.8125rem;
+.mg-creator-platform--youtube {
+  --platform-accent: #ff0000;
+  --platform-ring: rgba(255, 0, 0, 0.12);
+}
+
+.mg-creator-platform--tiktok {
+  --platform-accent: #010101;
+  --platform-ring: rgba(1, 1, 1, 0.1);
+}
+
+.mg-creator-platform--instagram {
+  --platform-accent: #d6249f;
+  --platform-ring: rgba(214, 36, 159, 0.12);
+}
+
+.mg-creator-platform__logo {
+  flex: 0 0 2.25rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  line-height: 0;
+}
+
+.mg-creator-platform__logo svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+}
+
+.mg-creator-platform__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 2.5rem;
+  padding: 0.65rem 0.75rem 0.65rem 0;
+  border: 0 !important;
+  border-radius: 0;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.mg-creator-platform__input:focus {
+  box-shadow: none !important;
 }
 
 .mg-creator-preview {
