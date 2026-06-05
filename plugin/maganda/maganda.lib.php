@@ -3,7 +3,9 @@ if (!defined('_GNUBOARD_')) {
     exit;
 }
 
-define('MAGANDA_VERSION', '1.0.0');
+define('MAGANDA_VERSION', '1.0.1');
+define('MAGANDA_SAMPLE_LIVE_SLUG', 'jolie');
+define('MAGANDA_SAMPLE_LIVE_URL', 'https://www.youtube.com/watch?v=Jav-pWT70rg');
 
 function maganda_table($name)
 {
@@ -130,6 +132,22 @@ function maganda_bootstrap()
     if (!maganda_is_installed()) {
         maganda_install();
     }
+
+    maganda_ensure_sample_live_if_empty();
+}
+
+function maganda_ensure_sample_live_if_empty()
+{
+    if (!maganda_is_installed()) {
+        return;
+    }
+
+    $table = maganda_table('creator');
+    $row = sql_fetch(" SELECT * FROM `{$table}` WHERE `mc_slug` = '" . sql_escape_string(MAGANDA_SAMPLE_LIVE_SLUG) . "' ");
+
+    if (!$row || maganda_stream_video_id($row) === '') {
+        maganda_apply_sample_live_creator();
+    }
 }
 
 function maganda_seed_defaults()
@@ -141,7 +159,7 @@ function maganda_seed_defaults()
     $count = sql_fetch(" SELECT COUNT(*) AS cnt FROM `{$creator_table}` ");
     if ((int) $count['cnt'] === 0) {
         $creators = array(
-            array('jolie', 'Jolie (졸리)', '보라카이 해변에서 실시간 소통 🏖️', '여행', '보라카이 핫걸 졸리의 라이브', 'https://www.youtube.com/watch?v=jfKfPfyJRdk', 'jfKfPfyJRdk', 1, 1250, 12400, 1200000, 1),
+            array('jolie', 'Jolie (졸리)', '보라카이 해변 실시간 LIVE', '여행', '마간다TV 샘플 라이브 방송', MAGANDA_SAMPLE_LIVE_URL, 'Jav-pWT70rg', 1, 1250, 12400, 1200000, 1),
             array('maria', 'Maria', '마닐라 맛집 투어 브이로그 & 먹방 🍜', '먹방', '마닐라 현지 맛집 라이브', '', '', 0, 840, 8200, 125000, 2),
             array('christine', '크리스틴', 'K-POP 댄스 커버 라이브 🎵', '댄스', 'K-POP 댄스 커버 전문', '', '', 1, 3200, 24500, 110000, 3),
         );
@@ -601,6 +619,109 @@ function maganda_analytics_payload()
         'ga4_id' => g5site_cfg('ga4_id', ''),
         'meta_pixel_id' => g5site_cfg('meta_pixel_id', ''),
     );
+}
+
+function maganda_validate_creator_fields(array $fields, $mc_id = 0)
+{
+    $errors = array();
+    $slug = isset($fields['mc_slug']) ? trim($fields['mc_slug']) : '';
+    $name = isset($fields['mc_name']) ? trim($fields['mc_name']) : '';
+    $title = isset($fields['mc_title']) ? trim($fields['mc_title']) : '';
+    $stream_url = isset($fields['mc_stream_url']) ? trim($fields['mc_stream_url']) : '';
+    $youtube_id = isset($fields['mc_youtube_id']) ? trim($fields['mc_youtube_id']) : '';
+    $is_live = isset($fields['mc_is_live']) ? (int) $fields['mc_is_live'] : 0;
+    $enabled = isset($fields['mc_enabled']) ? (int) $fields['mc_enabled'] : 0;
+
+    if ($slug === '') {
+        $errors['mc_slug'] = '슬러그(영문 ID)는 필수입니다. 예: jolie';
+    } elseif (!preg_match('/^[a-z0-9_-]+$/', $slug)) {
+        $errors['mc_slug'] = '슬러그는 영문 소문자, 숫자, 하이픈(-), 밑줄(_)만 사용할 수 있습니다.';
+    } else {
+        $table = maganda_table('creator');
+        $dup = sql_fetch(
+            " SELECT `mc_id` FROM `{$table}` WHERE `mc_slug` = '" . sql_escape_string($slug) . "' AND `mc_id` != '" . (int) $mc_id . "' "
+        );
+        if ($dup) {
+            $errors['mc_slug'] = '이미 사용 중인 슬러그입니다. 다른 값을 입력해 주세요.';
+        }
+    }
+
+    if ($name === '') {
+        $errors['mc_name'] = '방송회원 이름은 필수입니다.';
+    }
+
+    if ($title === '') {
+        $errors['mc_title'] = '방송 제목은 필수입니다. 홈 화면 카드에 표시됩니다.';
+    }
+
+    if ($is_live === 1 && $enabled !== 1) {
+        $errors['mc_enabled'] = 'LIVE ON 상태에서는 "사용" 체크도 함께 켜 주세요.';
+    }
+
+    if ($is_live === 1) {
+        if ($stream_url === '' && $youtube_id === '') {
+            $errors['mc_stream_url'] = 'LIVE ON 상태에서는 YouTube 라이브 URL이 필수입니다.';
+        } elseif (maganda_youtube_id_from_url($stream_url) === '' && maganda_youtube_id_from_url($youtube_id) === '') {
+            $errors['mc_stream_url'] = 'YouTube URL 형식이 올바르지 않습니다. watch?v=, youtu.be/, /live/ 형식을 확인해 주세요.';
+        }
+    } elseif ($stream_url !== '' && maganda_youtube_id_from_url($stream_url) === '') {
+        $errors['mc_stream_url'] = 'YouTube URL에서 영상 ID를 찾을 수 없습니다. URL을 다시 확인해 주세요.';
+    }
+
+    return $errors;
+}
+
+function maganda_apply_sample_live_creator()
+{
+    $table = maganda_table('creator');
+    $url = MAGANDA_SAMPLE_LIVE_URL;
+    $video_id = maganda_youtube_id_from_url($url);
+    $now = G5_TIME_YMDHIS;
+
+    $fields = maganda_normalize_stream_fields(array(
+        'mc_slug' => MAGANDA_SAMPLE_LIVE_SLUG,
+        'mc_name' => 'Jolie (졸리)',
+        'mc_title' => '보라카이 해변 실시간 LIVE',
+        'mc_category' => '여행',
+        'mc_intro' => '마간다TV 샘플 라이브 방송 — YouTube 연동 테스트',
+        'mc_stream_url' => $url,
+        'mc_youtube_id' => $video_id,
+        'mc_is_live' => 1,
+        'mc_viewers' => 1250,
+        'mc_sort' => 1,
+        'mc_enabled' => 1,
+    ));
+
+    $row = sql_fetch(" SELECT `mc_id` FROM `{$table}` WHERE `mc_slug` = '" . sql_escape_string(MAGANDA_SAMPLE_LIVE_SLUG) . "' ");
+
+    if ($row) {
+        $mc_id = (int) $row['mc_id'];
+        sql_query(
+            " UPDATE `{$table}` SET
+                `mc_name` = '" . sql_escape_string($fields['mc_name']) . "',
+                `mc_title` = '" . sql_escape_string($fields['mc_title']) . "',
+                `mc_category` = '" . sql_escape_string($fields['mc_category']) . "',
+                `mc_intro` = '" . sql_escape_string($fields['mc_intro']) . "',
+                `mc_stream_url` = '" . sql_escape_string($fields['mc_stream_url']) . "',
+                `mc_youtube_id` = '" . sql_escape_string($fields['mc_youtube_id']) . "',
+                `mc_is_live` = 1,
+                `mc_viewers` = 1250,
+                `mc_sort` = 1,
+                `mc_enabled` = 1
+              WHERE `mc_id` = {$mc_id} "
+        );
+
+        return $mc_id;
+    }
+
+    sql_query(
+        " INSERT INTO `{$table}`
+            (`mc_slug`,`mc_name`,`mc_title`,`mc_category`,`mc_intro`,`mc_stream_url`,`mc_youtube_id`,`mc_is_live`,`mc_viewers`,`mc_followers`,`mc_total_points`,`mc_sort`,`mc_enabled`,`mc_datetime`)
+          VALUES
+            ('" . sql_escape_string($fields['mc_slug']) . "','" . sql_escape_string($fields['mc_name']) . "','" . sql_escape_string($fields['mc_title']) . "','" . sql_escape_string($fields['mc_category']) . "','" . sql_escape_string($fields['mc_intro']) . "','" . sql_escape_string($fields['mc_stream_url']) . "','" . sql_escape_string($fields['mc_youtube_id']) . "',1,1250,12400,1200000,1,1,'{$now}') "
+    );
+
+    return (int) sql_insert_id();
 }
 
 function maganda_default_creator_payload()
