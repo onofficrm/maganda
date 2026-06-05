@@ -29,6 +29,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'mc_intro' => trim($_POST['mc_intro']),
             'mc_stream_url' => trim($_POST['mc_stream_url']),
             'mc_youtube_id' => trim($_POST['mc_youtube_id']),
+            'mc_platform' => isset($_POST['mc_platform']) ? trim($_POST['mc_platform']) : 'youtube',
+            'mc_tiktok_url' => trim($_POST['mc_tiktok_url']),
+            'mc_instagram_url' => trim($_POST['mc_instagram_url']),
             'mc_is_live' => isset($_POST['mc_is_live']) ? 1 : 0,
             'mc_viewers' => (int) $_POST['mc_viewers'],
             'mc_sort' => (int) $_POST['mc_sort'],
@@ -85,8 +88,9 @@ $sample_ready = $sample_row
     && (int) $sample_row['mc_is_live'] === 1
     && (int) $sample_row['mc_enabled'] === 1;
 
-$preview_id = $edit ? maganda_stream_video_id($edit) : '';
-$preview_embed = $preview_id !== '' ? maganda_youtube_embed_url($preview_id, false) : '';
+$preview_meta = $edit ? maganda_creator_stream_meta($edit) : maganda_stream_preview('');
+$preview_embed = $preview_meta['embed_url'];
+$preview_id = $preview_meta['platform'] === 'youtube' ? $preview_meta['video_id'] : ($preview_meta['platform'] !== '' ? $preview_meta['platform'] : '');
 
 $g5['title'] = '방송회원 관리';
 include_once G5_ADMIN_PATH . '/admin.head.php';
@@ -240,12 +244,26 @@ include_once G5_ADMIN_PATH . '/admin.head.php';
                 <tr><th>카테고리</th><td><input type="text" name="mc_category" value="<?php echo $edit ? get_text($edit['mc_category']) : ''; ?>" class="frm_input" placeholder="여행"></td></tr>
                 <tr><th>소개</th><td><input type="text" name="mc_intro" value="<?php echo $edit ? get_text($edit['mc_intro']) : ''; ?>" class="frm_input mg-stream-field" placeholder="방송 한 줄 소개"></td></tr>
                 <tr>
-                    <th class="mg-required">YouTube 라이브 URL</th>
+                    <th>주 라이브 플랫폼</th>
+                    <td>
+                        <select name="mc_platform" class="frm_input">
+                            <?php
+                            $cur_platform = $edit && isset($edit['mc_platform']) ? $edit['mc_platform'] : 'youtube';
+                            foreach (array('youtube' => 'YouTube', 'tiktok' => 'TikTok', 'instagram' => 'Instagram') as $pk => $plabel) {
+                                echo '<option value="' . $pk . '"' . ($cur_platform === $pk ? ' selected' : '') . '>' . $plabel . '</option>';
+                            }
+                            ?>
+                        </select>
+                        <p class="mg-stream-help">홈 방송 플레이어에 우선 표시할 플랫폼입니다.</p>
+                    </td>
+                </tr>
+                <tr>
+                    <th>YouTube 라이브 URL</th>
                     <td>
                         <input type="url" name="mc_stream_url" id="mc_stream_url" value="<?php echo $edit ? get_text($edit['mc_stream_url']) : ''; ?>" class="frm_input mg-stream-field <?php echo isset($form_errors['mc_stream_url']) ? 'mg-input-error' : ''; ?>" placeholder="<?php echo get_text(MAGANDA_SAMPLE_LIVE_URL); ?>">
                         <p class="mg-stream-help">
-                            LIVE ON 상태에서는 <b>필수</b>입니다. URL 붙여넣기 → 영상 ID 자동 추출 → 미리보기 확인<br>
-                            지원: <code>watch?v=</code>, <code>youtu.be/</code>, <code>/live/</code>, <code>/shorts/</code>
+                            LIVE ON 시 YouTube / TikTok / Instagram 중 최소 1개 URL 필요<br>
+                            YouTube: <code>watch?v=</code>, <code>youtu.be/</code>, <code>/live/</code>
                         </p>
                         <?php if (isset($form_errors['mc_stream_url'])) { ?><span class="mg-field-error"><?php echo get_text($form_errors['mc_stream_url']); ?></span><?php } ?>
                         <div class="mg-stream-preview">
@@ -267,6 +285,20 @@ include_once G5_ADMIN_PATH . '/admin.head.php';
                         </div>
                     </td>
                 </tr>
+                <tr>
+                    <th>TikTok URL</th>
+                    <td>
+                        <input type="url" name="mc_tiktok_url" value="<?php echo $edit && isset($edit['mc_tiktok_url']) ? get_text($edit['mc_tiktok_url']) : ''; ?>" class="frm_input mg-stream-field <?php echo isset($form_errors['mc_tiktok_url']) ? 'mg-input-error' : ''; ?>" placeholder="https://www.tiktok.com/@username">
+                        <?php if (isset($form_errors['mc_tiktok_url'])) { ?><span class="mg-field-error"><?php echo get_text($form_errors['mc_tiktok_url']); ?></span><?php } ?>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Instagram URL</th>
+                    <td>
+                        <input type="url" name="mc_instagram_url" value="<?php echo $edit && isset($edit['mc_instagram_url']) ? get_text($edit['mc_instagram_url']) : ''; ?>" class="frm_input mg-stream-field <?php echo isset($form_errors['mc_instagram_url']) ? 'mg-input-error' : ''; ?>" placeholder="https://www.instagram.com/username">
+                        <?php if (isset($form_errors['mc_instagram_url'])) { ?><span class="mg-field-error"><?php echo get_text($form_errors['mc_instagram_url']); ?></span><?php } ?>
+                    </td>
+                </tr>
                 <tr><th>시청자 수</th><td><input type="number" name="mc_viewers" value="<?php echo $edit ? (int) $edit['mc_viewers'] : 0; ?>" class="frm_input" min="0"></td></tr>
                 <tr><th>정렬</th><td><input type="number" name="mc_sort" value="<?php echo $edit ? (int) $edit['mc_sort'] : 0; ?>" class="frm_input" min="0"><span class="mg-stream-help">숫자가 작을수록 먼저 노출</span></td></tr>
                 <tr>
@@ -283,7 +315,7 @@ include_once G5_ADMIN_PATH . '/admin.head.php';
     <div class="btn_confirm01 btn_confirm">
         <input type="submit" value="저장" class="btn_submit">
         <a href="<?php echo G5_PLUGIN_URL; ?>/maganda/admin/creators.php" class="btn_frmline">새로 추가</a>
-        <?php if ($edit && $preview_id !== '') { ?>
+        <?php if ($edit && $preview_embed !== '') { ?>
             <a href="<?php echo G5_URL; ?>/#mg-live" target="_blank" class="btn_frmline">홈페이지에서 보기</a>
         <?php } ?>
     </div>
@@ -388,8 +420,11 @@ include_once G5_ADMIN_PATH . '/admin.head.php';
         }
         syncPreview();
         var videoId = idInput.value.trim();
-        if (liveInput.checked && !videoId) {
-            errors.push('LIVE ON 상태에서는 YouTube 라이브 URL이 필수입니다.');
+        var tiktokUrl = document.querySelector('[name="mc_tiktok_url"]');
+        var instagramUrl = document.querySelector('[name="mc_instagram_url"]');
+        var hasStream = videoId || (tiktokUrl && tiktokUrl.value.trim()) || (instagramUrl && instagramUrl.value.trim());
+        if (liveInput.checked && !hasStream) {
+            errors.push('LIVE ON 상태에서는 YouTube, TikTok, Instagram 중 최소 1개 URL이 필요합니다.');
             markError(urlInput, true);
         } else if (urlInput.value.trim() && !videoId) {
             errors.push('YouTube URL 형식을 확인해 주세요.');

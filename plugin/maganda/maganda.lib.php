@@ -3,7 +3,7 @@ if (!defined('_GNUBOARD_')) {
     exit;
 }
 
-define('MAGANDA_VERSION', '1.0.2');
+define('MAGANDA_VERSION', '1.0.3');
 define('MAGANDA_SAMPLE_LIVE_SLUG', 'jolie');
 define('MAGANDA_SAMPLE_LIVE_URL', 'https://youtu.be/fLSzzGgTUXw?si=DjmNAvx34JDfxUcE');
 
@@ -133,7 +133,32 @@ function maganda_bootstrap()
         maganda_install();
     }
 
+    maganda_upgrade_schema();
     maganda_ensure_sample_live_if_empty();
+}
+
+function maganda_add_column_if_missing($table, $column, $definition)
+{
+    $row = sql_fetch(" SHOW COLUMNS FROM `{$table}` LIKE '" . sql_escape_string($column) . "' ", false);
+    if (!$row) {
+        sql_query(" ALTER TABLE `{$table}` ADD `{$column}` {$definition} ", false);
+    }
+}
+
+function maganda_upgrade_schema()
+{
+    if (!maganda_is_installed()) {
+        return;
+    }
+
+    $creator = maganda_table('creator');
+    $application = maganda_table('application');
+
+    maganda_add_column_if_missing($creator, 'mc_platform', "varchar(16) NOT NULL DEFAULT 'youtube' AFTER `mc_youtube_id`");
+    maganda_add_column_if_missing($creator, 'mc_tiktok_url', "varchar(512) NOT NULL DEFAULT '' AFTER `mc_platform`");
+    maganda_add_column_if_missing($creator, 'mc_instagram_url', "varchar(512) NOT NULL DEFAULT '' AFTER `mc_tiktok_url`");
+    maganda_add_column_if_missing($application, 'ma_tiktok', "varchar(512) NOT NULL DEFAULT '' AFTER `ma_youtube`");
+    maganda_add_column_if_missing($application, 'ma_instagram', "varchar(512) NOT NULL DEFAULT '' AFTER `ma_tiktok`");
 }
 
 function maganda_ensure_sample_live_if_empty()
@@ -260,6 +285,159 @@ function maganda_youtube_embed_url($video_id, $autoplay = true)
     return 'https://www.youtube.com/embed/' . $video_id . '?' . implode('&', $params);
 }
 
+function maganda_tiktok_username_from_url($url)
+{
+    $url = trim((string) $url);
+    if ($url === '') {
+        return '';
+    }
+
+    if (preg_match('#tiktok\.com/@([^/?\s&]+)#i', $url, $matches)) {
+        return $matches[1];
+    }
+
+    return '';
+}
+
+function maganda_instagram_username_from_url($url)
+{
+    $url = trim((string) $url);
+    if ($url === '') {
+        return '';
+    }
+
+    if (preg_match('#instagram\.com/([^/?\s#]+)#i', $url, $matches)) {
+        $user = strtolower($matches[1]);
+        $blocked = array('p', 'reel', 'reels', 'stories', 'tv', 'live', 'explore', 'accounts');
+        if (in_array($user, $blocked, true)) {
+            return '';
+        }
+
+        return $matches[1];
+    }
+
+    return '';
+}
+
+function maganda_detect_stream_platform($url)
+{
+    $url = trim((string) $url);
+    if ($url === '') {
+        return '';
+    }
+
+    if (maganda_youtube_id_from_url($url) !== '') {
+        return 'youtube';
+    }
+    if (maganda_tiktok_username_from_url($url) !== '') {
+        return 'tiktok';
+    }
+    if (maganda_instagram_username_from_url($url) !== '') {
+        return 'instagram';
+    }
+
+    return '';
+}
+
+function maganda_stream_preview($url)
+{
+    $url = trim((string) $url);
+    $platform = maganda_detect_stream_platform($url);
+
+    if ($platform === 'youtube') {
+        $video_id = maganda_youtube_id_from_url($url);
+
+        return array(
+            'platform' => 'youtube',
+            'embed_url' => maganda_youtube_embed_url($video_id, false),
+            'watch_url' => $url !== '' ? $url : 'https://www.youtube.com/watch?v=' . $video_id,
+            'username' => '',
+            'video_id' => $video_id,
+            'label' => 'YouTube',
+        );
+    }
+
+    if ($platform === 'tiktok') {
+        $username = maganda_tiktok_username_from_url($url);
+        $watch_url = preg_match('#tiktok\.com#i', $url) ? $url : 'https://www.tiktok.com/@' . $username;
+
+        return array(
+            'platform' => 'tiktok',
+            'embed_url' => 'https://www.tiktok.com/embed/@' . rawurlencode($username),
+            'watch_url' => $watch_url,
+            'username' => $username,
+            'video_id' => '',
+            'label' => 'TikTok',
+        );
+    }
+
+    if ($platform === 'instagram') {
+        $username = maganda_instagram_username_from_url($url);
+
+        return array(
+            'platform' => 'instagram',
+            'embed_url' => 'https://www.instagram.com/' . rawurlencode($username) . '/embed',
+            'watch_url' => 'https://www.instagram.com/' . $username . '/',
+            'username' => $username,
+            'video_id' => '',
+            'label' => 'Instagram',
+        );
+    }
+
+    return array(
+        'platform' => '',
+        'embed_url' => '',
+        'watch_url' => $url,
+        'username' => '',
+        'video_id' => '',
+        'label' => 'Live',
+    );
+}
+
+function maganda_creator_stream_meta($row)
+{
+    if (!$row || !is_array($row)) {
+        return maganda_stream_preview('');
+    }
+
+    $platform = isset($row['mc_platform']) ? trim($row['mc_platform']) : '';
+    $urls = array(
+        'youtube' => isset($row['mc_stream_url']) ? trim($row['mc_stream_url']) : '',
+        'tiktok' => isset($row['mc_tiktok_url']) ? trim($row['mc_tiktok_url']) : '',
+        'instagram' => isset($row['mc_instagram_url']) ? trim($row['mc_instagram_url']) : '',
+    );
+
+    if ($platform !== '' && isset($urls[$platform]) && $urls[$platform] !== '') {
+        $preview = maganda_stream_preview($urls[$platform]);
+        if ($preview['platform'] !== '') {
+            return $preview;
+        }
+    }
+
+    foreach (array('youtube', 'tiktok', 'instagram') as $candidate) {
+        if ($urls[$candidate] === '') {
+            continue;
+        }
+        $preview = maganda_stream_preview($urls[$candidate]);
+        if ($preview['platform'] !== '') {
+            return $preview;
+        }
+    }
+
+    if (!empty($row['mc_youtube_id'])) {
+        return maganda_stream_preview('https://www.youtube.com/watch?v=' . $row['mc_youtube_id']);
+    }
+
+    return maganda_stream_preview('');
+}
+
+function maganda_creator_has_stream($row)
+{
+    $meta = maganda_creator_stream_meta($row);
+
+    return $meta['platform'] !== '';
+}
+
 function maganda_normalize_stream_fields(array $fields)
 {
     $url = isset($fields['mc_stream_url']) ? trim($fields['mc_stream_url']) : '';
@@ -319,7 +497,8 @@ function maganda_creator_to_live_item($row)
 
     $thumb = $row['mc_cover'] !== '' ? $row['mc_cover'] : 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=800&q=80';
     $profile = $row['mc_avatar'] !== '' ? $row['mc_avatar'] : 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&q=80';
-    $youtube_id = maganda_stream_video_id($row);
+    $stream = maganda_creator_stream_meta($row);
+    $youtube_id = $stream['platform'] === 'youtube' ? $stream['video_id'] : maganda_stream_video_id($row);
 
     return array(
         'id' => (int) $row['mc_id'],
@@ -331,9 +510,13 @@ function maganda_creator_to_live_item($row)
         'category' => $row['mc_category'],
         'thumb' => $thumb,
         'profile' => $profile,
-        'stream_url' => $row['mc_stream_url'],
+        'platform' => $stream['platform'],
+        'stream_url' => $stream['watch_url'],
         'youtube_id' => $youtube_id,
-        'embed_url' => maganda_youtube_embed_url($youtube_id),
+        'tiktok_url' => isset($row['mc_tiktok_url']) ? $row['mc_tiktok_url'] : '',
+        'instagram_url' => isset($row['mc_instagram_url']) ? $row['mc_instagram_url'] : '',
+        'embed_url' => $stream['embed_url'],
+        'stream_label' => $stream['label'],
         'intro' => $row['mc_intro'],
         'is_live' => (int) $row['mc_is_live'] === 1,
     );
@@ -358,7 +541,11 @@ function maganda_creator_to_card_item($row)
         'category' => $live['category'],
         'stream_url' => $live['stream_url'],
         'youtube_id' => $live['youtube_id'],
+        'tiktok_url' => $live['tiktok_url'],
+        'instagram_url' => $live['instagram_url'],
+        'platform' => $live['platform'],
         'embed_url' => $live['embed_url'],
+        'stream_label' => $live['stream_label'],
         'is_live' => $live['is_live'],
         'isLive' => $live['is_live'],
     );
@@ -384,7 +571,11 @@ function maganda_creator_to_room($row)
         'followers' => (int) $row['mc_followers'],
         'stream_url' => $live['stream_url'],
         'youtube_id' => $live['youtube_id'],
+        'tiktok_url' => $live['tiktok_url'],
+        'instagram_url' => $live['instagram_url'],
+        'platform' => $live['platform'],
         'embed_url' => $live['embed_url'],
+        'stream_label' => $live['stream_label'],
         'is_live' => $live['is_live'],
     );
 }
@@ -630,6 +821,9 @@ function maganda_validate_creator_fields(array $fields, $mc_id = 0)
     $title = isset($fields['mc_title']) ? trim($fields['mc_title']) : '';
     $stream_url = isset($fields['mc_stream_url']) ? trim($fields['mc_stream_url']) : '';
     $youtube_id = isset($fields['mc_youtube_id']) ? trim($fields['mc_youtube_id']) : '';
+    $tiktok_url = isset($fields['mc_tiktok_url']) ? trim($fields['mc_tiktok_url']) : '';
+    $instagram_url = isset($fields['mc_instagram_url']) ? trim($fields['mc_instagram_url']) : '';
+    $platform = isset($fields['mc_platform']) ? trim($fields['mc_platform']) : 'youtube';
     $is_live = isset($fields['mc_is_live']) ? (int) $fields['mc_is_live'] : 0;
     $enabled = isset($fields['mc_enabled']) ? (int) $fields['mc_enabled'] : 0;
 
@@ -660,13 +854,22 @@ function maganda_validate_creator_fields(array $fields, $mc_id = 0)
     }
 
     if ($is_live === 1) {
-        if ($stream_url === '' && $youtube_id === '') {
-            $errors['mc_stream_url'] = 'LIVE ON 상태에서는 YouTube 라이브 URL이 필수입니다.';
-        } elseif (maganda_youtube_id_from_url($stream_url) === '' && maganda_youtube_id_from_url($youtube_id) === '') {
-            $errors['mc_stream_url'] = 'YouTube URL 형식이 올바르지 않습니다. watch?v=, youtu.be/, /live/ 형식을 확인해 주세요.';
+        $preview_row = array(
+            'mc_platform' => $platform,
+            'mc_stream_url' => $stream_url,
+            'mc_youtube_id' => $youtube_id,
+            'mc_tiktok_url' => $tiktok_url,
+            'mc_instagram_url' => $instagram_url,
+        );
+        if (!maganda_creator_has_stream($preview_row)) {
+            $errors['mc_stream_url'] = 'LIVE ON 상태에서는 YouTube, TikTok, Instagram 중 최소 1개 라이브 URL이 필요합니다.';
         }
-    } elseif ($stream_url !== '' && maganda_youtube_id_from_url($stream_url) === '') {
-        $errors['mc_stream_url'] = 'YouTube URL에서 영상 ID를 찾을 수 없습니다. URL을 다시 확인해 주세요.';
+    } elseif ($stream_url !== '' && maganda_detect_stream_platform($stream_url) === '') {
+        $errors['mc_stream_url'] = 'YouTube URL 형식이 올바르지 않습니다.';
+    } elseif ($tiktok_url !== '' && maganda_tiktok_username_from_url($tiktok_url) === '') {
+        $errors['mc_tiktok_url'] = 'TikTok URL 형식이 올바르지 않습니다. @username 형식을 확인해 주세요.';
+    } elseif ($instagram_url !== '' && maganda_instagram_username_from_url($instagram_url) === '') {
+        $errors['mc_instagram_url'] = 'Instagram URL 형식이 올바르지 않습니다.';
     }
 
     return $errors;
@@ -687,6 +890,7 @@ function maganda_apply_sample_live_creator()
         'mc_intro' => '마간다TV 샘플 라이브 방송 — YouTube 연동 테스트',
         'mc_stream_url' => $url,
         'mc_youtube_id' => $video_id,
+        'mc_platform' => 'youtube',
         'mc_is_live' => 1,
         'mc_viewers' => 1250,
         'mc_sort' => 1,
@@ -705,6 +909,7 @@ function maganda_apply_sample_live_creator()
                 `mc_intro` = '" . sql_escape_string($fields['mc_intro']) . "',
                 `mc_stream_url` = '" . sql_escape_string($fields['mc_stream_url']) . "',
                 `mc_youtube_id` = '" . sql_escape_string($fields['mc_youtube_id']) . "',
+                `mc_platform` = 'youtube',
                 `mc_is_live` = 1,
                 `mc_viewers` = 1250,
                 `mc_sort` = 1,
@@ -802,7 +1007,9 @@ function maganda_notify_application($application)
     $body = "이름: {$application['ma_name']}\n";
     $body .= "이메일: {$application['ma_email']}\n";
     $body .= "연락처: {$application['ma_phone']}\n";
-    $body .= "YouTube: {$application['ma_youtube']}\n\n";
+    $body .= "YouTube: {$application['ma_youtube']}\n";
+    $body .= "TikTok: " . (isset($application['ma_tiktok']) ? $application['ma_tiktok'] : '') . "\n";
+    $body .= "Instagram: " . (isset($application['ma_instagram']) ? $application['ma_instagram'] : '') . "\n\n";
     $body .= $application['ma_message'];
 
     if (function_exists('mailer')) {

@@ -35,6 +35,8 @@ include_once G5_ADMIN_PATH . '/admin.head.php';
                 <th>이메일</th>
                 <th>연락처</th>
                 <th>YouTube</th>
+                <th>TikTok</th>
+                <th>Instagram</th>
                 <th>상태</th>
                 <th>일시</th>
                 <th>관리</th>
@@ -42,14 +44,16 @@ include_once G5_ADMIN_PATH . '/admin.head.php';
         </thead>
         <tbody>
         <?php if (empty($list)) { ?>
-            <tr><td colspan="8">신청 내역이 없습니다.</td></tr>
+            <tr><td colspan="10">신청 내역이 없습니다.</td></tr>
         <?php } else { foreach ($list as $row) { ?>
             <tr>
                 <td><?php echo (int) $row['ma_id']; ?></td>
                 <td><?php echo get_text($row['ma_name']); ?></td>
                 <td><?php echo get_text($row['ma_email']); ?></td>
                 <td><?php echo get_text($row['ma_phone']); ?></td>
-                <td><a href="<?php echo get_text($row['ma_youtube']); ?>" target="_blank">링크</a></td>
+                <td><?php echo $row['ma_youtube'] !== '' ? '<a href="' . get_text($row['ma_youtube']) . '" target="_blank" rel="noopener">YT</a>' : '-'; ?></td>
+                <td><?php echo !empty($row['ma_tiktok']) ? '<a href="' . get_text($row['ma_tiktok']) . '" target="_blank" rel="noopener">TT</a>' : '-'; ?></td>
+                <td><?php echo !empty($row['ma_instagram']) ? '<a href="' . get_text($row['ma_instagram']) . '" target="_blank" rel="noopener">IG</a>' : '-'; ?></td>
                 <td><?php echo get_text($row['ma_status']); ?></td>
                 <td><?php echo get_text($row['ma_datetime']); ?></td>
                 <td>
@@ -67,7 +71,7 @@ include_once G5_ADMIN_PATH . '/admin.head.php';
                 </td>
             </tr>
             <tr>
-                <td colspan="8" style="text-align:left;padding:8px 12px;background:#fafafa;"><?php echo nl2br(get_text($row['ma_message'])); ?></td>
+                <td colspan="10" style="text-align:left;padding:8px 12px;background:#fafafa;"><?php echo nl2br(get_text($row['ma_message'])); ?></td>
             </tr>
         <?php } } ?>
         </tbody>
