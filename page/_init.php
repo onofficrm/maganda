@@ -18,14 +18,7 @@ if (!defined('_GNUBOARD_')) {
 
 /**
  * head/tail include 시 GNUBoard 전역 변수 접근 (함수 스코프 include 대응)
- */
-function g5_page_import_globals()
-{
-    global $g5, $config, $member, $is_member, $is_admin, $is_guest, $board, $group, $default, $g5_debug, $qaconfig;
-}
-
-/**
- * minimal 레이아웃용 CSS/JS (head.sub — 사이트 헤더·사이드·푸터 없음)
+ * 별도 함수로 global 선언하면 호출 함수 스코프에 전달되지 않으므로 각 함수 내부에서 직접 선언한다.
  */
 function g5_page_enqueue_minimal_assets()
 {
@@ -57,8 +50,7 @@ function g5_page_enqueue_minimal_assets()
  */
 function g5_page_start($title, $layout = 'full')
 {
-    g5_page_import_globals();
-    global $g5;
+    global $g5, $config, $member, $is_member, $is_admin, $is_guest, $board, $group, $default, $g5_debug, $qaconfig;
 
     $g5['title'] = $title;
 
@@ -78,7 +70,7 @@ function g5_page_start($title, $layout = 'full')
  */
 function g5_page_end($layout = 'full')
 {
-    g5_page_import_globals();
+    global $g5, $config, $is_admin, $is_member, $g5_debug;
 
     if ($layout === 'minimal') {
         include_once(G5_PATH . '/tail.sub.php');

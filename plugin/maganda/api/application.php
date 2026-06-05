@@ -14,11 +14,11 @@ $youtube = isset($_POST['youtube']) ? trim(strip_tags($_POST['youtube'])) : '';
 $message = isset($_POST['message']) ? trim(strip_tags($_POST['message'])) : '';
 
 if ($name === '' || $email === '' || $phone === '' || $youtube === '') {
-    maganda_json_response(array('ok' => false, 'message' => '필수 항목을 입력해 주세요.'), 400);
+    maganda_json_response(array('ok' => false, 'message' => 'Please fill in all required fields.'), 400);
 }
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    maganda_json_response(array('ok' => false, 'message' => '이메일 형식이 올바르지 않습니다.'), 400);
+    maganda_json_response(array('ok' => false, 'message' => 'Please enter a valid email address.'), 400);
 }
 
 $table = maganda_table('application');
@@ -41,5 +41,5 @@ maganda_notify_application($application);
 
 maganda_json_response(array(
     'ok' => true,
-    'message' => '신청이 접수되었습니다. 검토 후 연락드리겠습니다.',
+    'message' => 'Your application has been received. We will contact you after review.',
 ));

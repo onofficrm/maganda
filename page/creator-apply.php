@@ -7,45 +7,45 @@ if (!function_exists('g5site_cfg')) {
     }
 }
 
-$site_name = function_exists('g5site_cfg') ? g5site_cfg('site_name', '마간다TV') : '마간다TV';
+$site_name = function_exists('g5site_cfg') ? g5site_cfg('site_name', 'Maganda TV') : 'Maganda TV';
 $api_url = G5_PLUGIN_URL . '/maganda/api/application.php';
-$thanks_url = G5_URL . '/page/inquiry-thanks.php';
+$thanks_url = G5_URL . '/page/creator-apply-thanks.php';
 
-g5_page_start('방송회원 신청', 'minimal');
+g5_page_start('Creator Application', 'minimal');
 ?>
 <div class="page-template page-creator-apply">
     <header class="page-hero reveal">
         <div class="page-inner">
-            <p class="page-eyebrow">Creator</p>
-            <h1 class="page-title">방송회원 신청</h1>
-            <p class="page-desc">YouTube 라이브를 운영 중이라면 <?php echo htmlspecialchars($site_name, ENT_QUOTES, 'UTF-8'); ?> 방송회원으로 신청해 주세요.</p>
+            <p class="page-eyebrow">Creator Program</p>
+            <h1 class="page-title">Become a Creator</h1>
+            <p class="page-desc">Streaming on YouTube? Apply to join <?php echo htmlspecialchars($site_name, ENT_QUOTES, 'UTF-8'); ?> as a live creator and connect with supporters worldwide.</p>
         </div>
     </header>
     <section class="page-section reveal">
-        <div class="page-inner">
+        <div class="page-inner page-inner--narrow">
             <form id="creatorApplyForm" class="page-form" method="post" action="#" novalidate>
                 <div class="page-form__row">
-                    <label for="ca_name">이름 *</label>
-                    <input type="text" id="ca_name" name="name" required>
+                    <label for="ca_name">Full Name <span class="page-form__req" aria-hidden="true">*</span></label>
+                    <input type="text" id="ca_name" name="name" required autocomplete="name" placeholder="Your name">
                 </div>
                 <div class="page-form__row">
-                    <label for="ca_email">이메일 *</label>
-                    <input type="email" id="ca_email" name="email" required>
+                    <label for="ca_email">Email <span class="page-form__req" aria-hidden="true">*</span></label>
+                    <input type="email" id="ca_email" name="email" required autocomplete="email" placeholder="you@example.com">
                 </div>
                 <div class="page-form__row">
-                    <label for="ca_phone">연락처 *</label>
-                    <input type="text" id="ca_phone" name="phone" required>
+                    <label for="ca_phone">Phone / WhatsApp <span class="page-form__req" aria-hidden="true">*</span></label>
+                    <input type="text" id="ca_phone" name="phone" required autocomplete="tel" placeholder="+63 9XX XXX XXXX">
                 </div>
                 <div class="page-form__row">
-                    <label for="ca_youtube">YouTube 채널/라이브 URL *</label>
+                    <label for="ca_youtube">YouTube Channel or Live URL <span class="page-form__req" aria-hidden="true">*</span></label>
                     <input type="url" id="ca_youtube" name="youtube" required placeholder="https://www.youtube.com/...">
                 </div>
                 <div class="page-form__row">
-                    <label for="ca_message">소개 및 문의</label>
-                    <textarea id="ca_message" name="message" rows="6" placeholder="방송 주제, 운영 시간, 경력 등을 적어 주세요."></textarea>
+                    <label for="ca_message">About You &amp; Message</label>
+                    <textarea id="ca_message" name="message" rows="6" placeholder="Tell us about your content, streaming schedule, experience, and why you want to join."></textarea>
                 </div>
                 <p id="creatorApplyMsg" class="page-form__msg" aria-live="polite"></p>
-                <button type="submit" class="page-btn page-btn--primary">신청하기</button>
+                <button type="submit" class="page-btn page-btn--primary">Submit Application</button>
             </form>
         </div>
     </section>
@@ -57,7 +57,8 @@ g5_page_start('방송회원 신청', 'minimal');
     if (!form) return;
     form.addEventListener('submit', function (e) {
         e.preventDefault();
-        msg.textContent = '전송 중...';
+        msg.textContent = 'Sending…';
+        msg.className = 'page-form__msg is-loading';
         var fd = new FormData(form);
         fetch(<?php echo json_encode($api_url, JSON_UNESCAPED_UNICODE); ?>, {
             method: 'POST',
@@ -68,9 +69,11 @@ g5_page_start('방송회원 신청', 'minimal');
                 location.href = <?php echo json_encode($thanks_url, JSON_UNESCAPED_UNICODE); ?>;
                 return;
             }
-            msg.textContent = data.message || '신청에 실패했습니다.';
+            msg.className = 'page-form__msg is-error';
+            msg.textContent = data.message || 'Application failed. Please try again.';
         }).catch(function () {
-            msg.textContent = '네트워크 오류가 발생했습니다.';
+            msg.className = 'page-form__msg is-error';
+            msg.textContent = 'Network error. Please check your connection and try again.';
         });
     });
 })();
