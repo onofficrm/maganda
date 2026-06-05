@@ -3,7 +3,7 @@ if (!defined('_GNUBOARD_')) {
     exit;
 }
 
-define('MAGANDA_VERSION', '1.0.3');
+define('MAGANDA_VERSION', '1.0.4');
 define('MAGANDA_SAMPLE_LIVE_SLUG', 'jolie');
 define('MAGANDA_SAMPLE_LIVE_URL', 'https://youtu.be/fLSzzGgTUXw?si=DjmNAvx34JDfxUcE');
 
@@ -159,6 +159,41 @@ function maganda_upgrade_schema()
     maganda_add_column_if_missing($creator, 'mc_instagram_url', "varchar(512) NOT NULL DEFAULT '' AFTER `mc_tiktok_url`");
     maganda_add_column_if_missing($application, 'ma_tiktok', "varchar(512) NOT NULL DEFAULT '' AFTER `ma_youtube`");
     maganda_add_column_if_missing($application, 'ma_instagram', "varchar(512) NOT NULL DEFAULT '' AFTER `ma_tiktok`");
+
+    $setting = maganda_table('setting');
+    $point_charge = maganda_table('point_charge');
+    if (!sql_fetch(" SHOW TABLES LIKE '" . sql_escape_string($setting) . "' ", false)) {
+        sql_query(
+            " CREATE TABLE IF NOT EXISTS `{$setting}` (
+                `ms_key` varchar(64) NOT NULL,
+                `ms_value` text NOT NULL,
+                PRIMARY KEY (`ms_key`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ",
+            false
+        );
+    }
+    if (!sql_fetch(" SHOW TABLES LIKE '" . sql_escape_string($point_charge) . "' ", false)) {
+        sql_query(
+            " CREATE TABLE IF NOT EXISTS `{$point_charge}` (
+                `mp_id` int unsigned NOT NULL AUTO_INCREMENT,
+                `mb_id` varchar(20) NOT NULL DEFAULT '',
+                `mp_amount` int unsigned NOT NULL DEFAULT '0',
+                `mp_depositor` varchar(64) NOT NULL DEFAULT '',
+                `mp_memo` varchar(255) NOT NULL DEFAULT '',
+                `mp_status` varchar(16) NOT NULL DEFAULT 'pending',
+                `mp_admin_id` varchar(20) NOT NULL DEFAULT '',
+                `mp_admin_memo` varchar(255) NOT NULL DEFAULT '',
+                `mp_datetime` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+                `mp_confirmed_datetime` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+                PRIMARY KEY (`mp_id`),
+                KEY `mp_status_datetime` (`mp_status`,`mp_datetime`),
+                KEY `mb_id` (`mb_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ",
+            false
+        );
+    }
+
+    maganda_seed_point_settings();
 }
 
 function maganda_ensure_sample_live_if_empty()
@@ -1015,4 +1050,234 @@ function maganda_notify_application($application)
     if (function_exists('mailer')) {
         mailer($application['ma_name'], $application['ma_email'], $email, $subject, nl2br($body), 0);
     }
+}
+
+function maganda_setting_get($key, $default = '')
+{
+    $table = maganda_table('setting');
+    $row = sql_fetch(" SELECT `ms_value` FROM `{$table}` WHERE `ms_key` = '" . sql_escape_string($key) . "' ");
+    if (!$row || !isset($row['ms_value'])) {
+        return (string) $default;
+    }
+
+    return (string) $row['ms_value'];
+}
+
+function maganda_setting_set($key, $value)
+{
+    $table = maganda_table('setting');
+    $exists = sql_fetch(" SELECT `ms_key` FROM `{$table}` WHERE `ms_key` = '" . sql_escape_string($key) . "' ");
+    if ($exists) {
+        sql_query(" UPDATE `{$table}` SET `ms_value` = '" . sql_escape_string($value) . "' WHERE `ms_key` = '" . sql_escape_string($key) . "' ");
+        return;
+    }
+
+    sql_query(" INSERT INTO `{$table}` (`ms_key`, `ms_value`) VALUES ('" . sql_escape_string($key) . "', '" . sql_escape_string($value) . "') ");
+}
+
+function maganda_seed_point_settings()
+{
+    if (maganda_setting_get('bank_name', '') !== '') {
+        return;
+    }
+
+    maganda_setting_set('bank_name', '은행명을 관리자에서 입력하세요');
+    maganda_setting_set('bank_account', '000-000-000000');
+    maganda_setting_set('bank_holder', '마간다TV');
+    maganda_setting_set(
+        'bank_guide',
+        "1. 아래 계좌로 입금해 주세요.\n2. 충전 신청 시 입금자명을 정확히 입력해 주세요.\n3. 관리자 입금 확인 후 포인트가 충전됩니다.\n4. 1P = 1원 기준으로 선물 후원에 사용됩니다."
+    );
+    maganda_setting_set('point_min_amount', '1000');
+}
+
+function maganda_get_bank_settings()
+{
+    return array(
+        'bank_name' => maganda_setting_get('bank_name', ''),
+        'bank_account' => maganda_setting_get('bank_account', ''),
+        'bank_holder' => maganda_setting_get('bank_holder', ''),
+        'bank_guide' => maganda_setting_get('bank_guide', ''),
+        'point_min_amount' => max(100, (int) maganda_setting_get('point_min_amount', '1000')),
+    );
+}
+
+function maganda_get_point_charge_row($mp_id)
+{
+    $table = maganda_table('point_charge');
+
+    return sql_fetch(" SELECT * FROM `{$table}` WHERE `mp_id` = '" . (int) $mp_id . "' ");
+}
+
+function maganda_get_member_point_charges($mb_id, $limit = 10)
+{
+    $table = maganda_table('point_charge');
+    $limit = max(1, min(20, (int) $limit));
+    $list = array();
+    $result = sql_query(
+        " SELECT * FROM `{$table}` WHERE `mb_id` = '" . sql_escape_string($mb_id) . "' ORDER BY `mp_id` DESC LIMIT {$limit} "
+    );
+    while ($row = sql_fetch_array($result)) {
+        $list[] = $row;
+    }
+
+    return $list;
+}
+
+function maganda_create_point_charge($mb_id, $amount, $depositor, $memo = '')
+{
+    global $member;
+
+    if (!$mb_id) {
+        return array('ok' => false, 'message' => '로그인이 필요합니다.');
+    }
+
+    $bank = maganda_get_bank_settings();
+    $amount = (int) $amount;
+    $depositor = trim(strip_tags((string) $depositor));
+    $memo = trim(strip_tags((string) $memo));
+
+    if ($amount < $bank['point_min_amount']) {
+        return array(
+            'ok' => false,
+            'message' => '최소 충전 포인트는 ' . number_format($bank['point_min_amount']) . 'P 입니다.',
+        );
+    }
+
+    if ($amount > 10000000) {
+        return array('ok' => false, 'message' => '1회 최대 충전은 10,000,000P 입니다.');
+    }
+
+    if ($depositor === '') {
+        return array('ok' => false, 'message' => '입금자명을 입력해 주세요.');
+    }
+
+    if ($bank['bank_account'] === '' || $bank['bank_name'] === '') {
+        return array('ok' => false, 'message' => '입금 계좌가 아직 설정되지 않았습니다. 잠시 후 다시 시도해 주세요.');
+    }
+
+    $table = maganda_table('point_charge');
+    $pending = sql_fetch(
+        " SELECT COUNT(*) AS cnt FROM `{$table}` WHERE `mb_id` = '" . sql_escape_string($mb_id) . "' AND `mp_status` = 'pending' "
+    );
+    if ($pending && (int) $pending['cnt'] >= 5) {
+        return array('ok' => false, 'message' => '대기 중인 충전 신청이 너무 많습니다. 확인 후 다시 신청해 주세요.');
+    }
+
+    sql_query(
+        " INSERT INTO `{$table}`
+            (`mb_id`,`mp_amount`,`mp_depositor`,`mp_memo`,`mp_status`,`mp_datetime`)
+          VALUES
+            ('" . sql_escape_string($mb_id) . "','{$amount}','" . sql_escape_string(cut_str($depositor, 64, '')) . "','"
+        . sql_escape_string(cut_str($memo, 255, '')) . "','pending','" . G5_TIME_YMDHIS . "') "
+    );
+
+    $mp_id = (int) sql_insert_id();
+    maganda_notify_point_charge_request($mp_id, $mb_id, $amount, $depositor);
+
+    return array(
+        'ok' => true,
+        'message' => '충전 신청이 접수되었습니다. 입금 확인 후 포인트가 충전됩니다.',
+        'mp_id' => $mp_id,
+    );
+}
+
+function maganda_approve_point_charge($mp_id, $admin_id = '')
+{
+    global $config;
+
+    $table = maganda_table('point_charge');
+    $row = maganda_get_point_charge_row($mp_id);
+    if (!$row) {
+        return array('ok' => false, 'message' => '신청 내역을 찾을 수 없습니다.');
+    }
+
+    if ($row['mp_status'] === 'approved') {
+        return array('ok' => false, 'message' => '이미 입금 확인된 신청입니다.');
+    }
+
+    if ($row['mp_status'] !== 'pending') {
+        return array('ok' => false, 'message' => '처리할 수 없는 상태입니다.');
+    }
+
+    if (!$config['cf_use_point']) {
+        return array('ok' => false, 'message' => 'GNUBoard 환경설정에서 포인트 사용(cf_use_point)을 켜 주세요.');
+    }
+
+    $result = insert_point(
+        $row['mb_id'],
+        (int) $row['mp_amount'],
+        '포인트 충전 (계좌입금)',
+        '@maganda_point',
+        (string) $row['mp_id'],
+        'charge'
+    );
+
+    if ((int) $result !== 1) {
+        return array('ok' => false, 'message' => '포인트 지급에 실패했습니다. (중복 처리 또는 회원 오류)');
+    }
+
+    sql_query(
+        " UPDATE `{$table}` SET
+            `mp_status` = 'approved',
+            `mp_admin_id` = '" . sql_escape_string($admin_id) . "',
+            `mp_confirmed_datetime` = '" . G5_TIME_YMDHIS . "'
+          WHERE `mp_id` = '" . (int) $mp_id . "' AND `mp_status` = 'pending' "
+    );
+
+    return array('ok' => true, 'message' => number_format((int) $row['mp_amount']) . 'P가 충전되었습니다.');
+}
+
+function maganda_reject_point_charge($mp_id, $admin_id = '', $admin_memo = '')
+{
+    $table = maganda_table('point_charge');
+    $row = maganda_get_point_charge_row($mp_id);
+    if (!$row || $row['mp_status'] !== 'pending') {
+        return array('ok' => false, 'message' => '거절할 수 없는 신청입니다.');
+    }
+
+    sql_query(
+        " UPDATE `{$table}` SET
+            `mp_status` = 'rejected',
+            `mp_admin_id` = '" . sql_escape_string($admin_id) . "',
+            `mp_admin_memo` = '" . sql_escape_string(cut_str(strip_tags($admin_memo), 255, '')) . "',
+            `mp_confirmed_datetime` = '" . G5_TIME_YMDHIS . "'
+          WHERE `mp_id` = '" . (int) $mp_id . "' AND `mp_status` = 'pending' "
+    );
+
+    return array('ok' => true, 'message' => '신청이 거절 처리되었습니다.');
+}
+
+function maganda_point_charge_status_label($status)
+{
+    $map = array(
+        'pending' => '입금 확인 대기',
+        'approved' => '충전 완료',
+        'rejected' => '거절',
+        'cancelled' => '취소',
+    );
+
+    return isset($map[$status]) ? $map[$status] : $status;
+}
+
+function maganda_notify_point_charge_request($mp_id, $mb_id, $amount, $depositor)
+{
+    if (!function_exists('g5site_cfg')) {
+        return;
+    }
+
+    $email = g5site_cfg('inquiry_notify_email', g5site_cfg('email', ''));
+    if ($email === '' || !function_exists('mailer')) {
+        return;
+    }
+
+    $member_row = get_member($mb_id, 'mb_name, mb_nick, mb_email');
+    $subject = '[마간다TV] 포인트 충전 신청 #' . (int) $mp_id;
+    $body = "신청번호: {$mp_id}\n";
+    $body .= "회원: {$mb_id} (" . (isset($member_row['mb_nick']) ? $member_row['mb_nick'] : '') . ")\n";
+    $body .= "신청 포인트: " . number_format((int) $amount) . "P\n";
+    $body .= "입금자명: {$depositor}\n";
+    $body .= "관리자: " . G5_PLUGIN_URL . "/maganda/admin/point-charges.php\n";
+
+    mailer('Maganda TV', $email, $email, $subject, nl2br($body), 0);
 }

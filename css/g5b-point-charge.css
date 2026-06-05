@@ -1,0 +1,419 @@
+@charset "utf-8";
+
+/* Point charge — /page/point-charge.php */
+
+.mg-point-charge {
+  --mg-brand-start: #7c3aed;
+  --mg-brand-end: #ec4899;
+  position: relative;
+  min-height: 100vh;
+  padding: 2rem 1.25rem 3rem;
+  font-family: var(--font-main, 'Pretendard', 'Malgun Gothic', sans-serif);
+  color: #1e293b;
+  box-sizing: border-box;
+}
+
+.mg-point-charge *,
+.mg-point-charge *::before,
+.mg-point-charge *::after {
+  box-sizing: border-box;
+}
+
+.mg-point-charge__bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(236, 72, 153, 0.16), transparent 42%),
+    radial-gradient(circle at 88% 8%, rgba(124, 58, 237, 0.2), transparent 40%),
+    linear-gradient(165deg, #0f172a 0%, #1e1b4b 48%, #312e81 100%);
+}
+
+.mg-point-charge__inner {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.mg-point-charge__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 1.75rem;
+  text-decoration: none;
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.mg-point-charge__brand-mark {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, var(--mg-brand-start), var(--mg-brand-end));
+  box-shadow: 0 8px 24px rgba(236, 72, 153, 0.35);
+}
+
+.mg-point-charge__hero {
+  margin-bottom: 1.5rem;
+  color: #fff;
+}
+
+.mg-point-charge__eyebrow {
+  margin: 0 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.mg-point-charge__title {
+  margin: 0;
+  font-size: clamp(1.75rem, 4vw, 2.35rem);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+}
+
+.mg-point-charge__desc {
+  margin: 0.85rem 0 0;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.mg-point-charge__card {
+  background: #fff;
+  border-radius: 1.25rem;
+  padding: 1.5rem;
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.18);
+}
+
+.mg-point-charge__balance {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.15rem;
+  border-radius: 0.85rem;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.08), rgba(236, 72, 153, 0.08));
+  border: 1px solid rgba(124, 58, 237, 0.15);
+}
+
+.mg-point-charge__balance-label {
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.mg-point-charge__balance-value {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #7c3aed;
+}
+
+.mg-point-charge__steps {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0 0 1.25rem;
+  padding: 0;
+  list-style: none;
+}
+
+.mg-point-charge__steps li {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #475569;
+}
+
+.mg-point-charge__steps-num {
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  background: #ede9fe;
+  color: #7c3aed;
+  font-size: 0.75rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mg-point-charge__bank {
+  margin-bottom: 1.25rem;
+  padding: 1.15rem;
+  border-radius: 0.85rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.mg-point-charge__bank-title {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.mg-point-charge__bank-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.mg-point-charge__bank-row:last-child {
+  margin-bottom: 0;
+}
+
+.mg-point-charge__bank-label {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.mg-point-charge__bank-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+  word-break: break-all;
+  text-align: right;
+}
+
+.mg-point-charge__bank-value--account {
+  font-size: 1.15rem;
+  letter-spacing: 0.02em;
+}
+
+.mg-point-charge__copy {
+  margin-top: 0.85rem;
+  width: 100%;
+  padding: 0.65rem 1rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.65rem;
+  background: #fff;
+  color: #334155;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.mg-point-charge__copy:hover {
+  border-color: #7c3aed;
+  color: #7c3aed;
+}
+
+.mg-point-charge__guide {
+  margin: 0 0 1.25rem;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  font-size: 0.875rem;
+  line-height: 1.65;
+  color: #92400e;
+  white-space: pre-line;
+}
+
+.mg-point-charge-form__row {
+  margin-bottom: 1rem;
+}
+
+.mg-point-charge-form__row label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.mg-point-charge-form__req {
+  color: #ec4899;
+}
+
+.mg-point-charge-form__field input,
+.mg-point-charge-form__field textarea {
+  width: 100%;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.65rem;
+  font: inherit;
+  color: #0f172a;
+  background: #fff;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.mg-point-charge-form__field input:focus,
+.mg-point-charge-form__field textarea:focus {
+  outline: none;
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+}
+
+.mg-point-charge-form__hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.mg-point-charge-form__submit {
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.9rem 1.25rem;
+  border: none;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, var(--mg-brand-start), var(--mg-brand-end));
+  color: #fff;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 12px 28px rgba(124, 58, 237, 0.35);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.mg-point-charge-form__submit:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 32px rgba(124, 58, 237, 0.4);
+}
+
+.mg-point-charge-form__msg {
+  margin: 0.85rem 0 0;
+  font-size: 0.875rem;
+  min-height: 1.25rem;
+}
+
+.mg-point-charge-form__msg.is-error {
+  color: #dc2626;
+}
+
+.mg-point-charge-form__msg.is-loading {
+  color: #64748b;
+}
+
+.mg-point-charge__history {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.mg-point-charge__history-title {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+.mg-point-charge__history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.825rem;
+}
+
+.mg-point-charge__history-table th,
+.mg-point-charge__history-table td {
+  padding: 0.55rem 0.35rem;
+  border-bottom: 1px solid #f1f5f9;
+  text-align: left;
+}
+
+.mg-point-charge__history-table th {
+  color: #64748b;
+  font-weight: 600;
+}
+
+.mg-point-charge__status {
+  display: inline-block;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.mg-point-charge__status--pending {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.mg-point-charge__status--approved {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.mg-point-charge__status--rejected {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.mg-point-charge__login {
+  text-align: center;
+  padding: 1.5rem 0 0.5rem;
+}
+
+.mg-point-charge__login p {
+  margin: 0 0 1rem;
+  color: #64748b;
+}
+
+.mg-point-charge__login-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.85rem 1.5rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, var(--mg-brand-start), var(--mg-brand-end));
+  color: #fff;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.mg-point-charge__links {
+  margin-top: 1rem;
+  text-align: center;
+  font-size: 0.875rem;
+}
+
+.mg-point-charge__links a {
+  color: #7c3aed;
+  text-decoration: none;
+}
+
+.mg-point-charge__links a:hover {
+  text-decoration: underline;
+}
+
+.mg-point-charge--thanks .mg-point-charge__card {
+  text-align: center;
+}
+
+.mg-point-charge--thanks .mg-point-charge-form__submit {
+  display: inline-flex;
+  width: auto;
+  min-width: 200px;
+  text-decoration: none;
+  justify-content: center;
+}
+
+@media (max-width: 480px) {
+  .mg-point-charge__history-table {
+    font-size: 0.75rem;
+  }
+
+  .mg-point-charge__bank-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .mg-point-charge__bank-value {
+    text-align: left;
+  }
+}

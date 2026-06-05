@@ -8,6 +8,7 @@ include_once G5_ADMIN_PATH . '/admin.head.php';
 $table = maganda_table('creator');
 $creator_count = sql_fetch(" SELECT COUNT(*) AS cnt FROM `{$table}` ");
 $app_count = sql_fetch(" SELECT COUNT(*) AS cnt FROM `" . maganda_table('application') . "` WHERE `ma_status` = 'pending' ");
+$point_pending = sql_fetch(" SELECT COUNT(*) AS cnt FROM `" . maganda_table('point_charge') . "` WHERE `mp_status` = 'pending' ");
 $sample_row = sql_fetch(" SELECT * FROM `{$table}` WHERE `mc_slug` = '" . sql_escape_string(MAGANDA_SAMPLE_LIVE_SLUG) . "' ");
 $sample_ready = $sample_row
     && maganda_stream_video_id($sample_row) === maganda_youtube_id_from_url(MAGANDA_SAMPLE_LIVE_URL)
@@ -32,6 +33,9 @@ $sample_ready = $sample_row
 <ul class="anchor">
     <li><a href="<?php echo G5_PLUGIN_URL; ?>/maganda/admin/creators.php">방송회원 관리</a></li>
     <li><a href="<?php echo G5_PLUGIN_URL; ?>/maganda/admin/applications.php">방송회원 신청</a></li>
+    <li><a href="<?php echo G5_PLUGIN_URL; ?>/maganda/admin/point-charges.php">포인트 충전 신청<?php if ((int) $point_pending['cnt'] > 0) { ?> (<?php echo number_format((int) $point_pending['cnt']); ?>)<?php } ?></a></li>
+    <li><a href="<?php echo G5_PLUGIN_URL; ?>/maganda/admin/point-settings.php">포인트 충전 계좌</a></li>
+    <li><a href="<?php echo G5_URL; ?>/page/point-charge.php" target="_blank">충전 페이지 보기</a></li>
     <li><a href="<?php echo G5_PLUGIN_URL; ?>/maganda/install.php">DB 재설치/시드</a></li>
     <li><a href="<?php echo G5_URL; ?>/" target="_blank">홈페이지 보기</a></li>
 </ul>
@@ -45,6 +49,13 @@ $sample_ready = $sample_row
         <tr>
             <th scope="row">대기 중 신청</th>
             <td><?php echo number_format((int) $app_count['cnt']); ?>건</td>
+        </tr>
+        <tr>
+            <th scope="row">포인트 충전 대기</th>
+            <td>
+                <?php echo number_format((int) $point_pending['cnt']); ?>건
+                — <a href="<?php echo G5_PLUGIN_URL; ?>/maganda/admin/point-charges.php">입금 확인</a>
+            </td>
         </tr>
         <tr>
             <th scope="row">샘플 LIVE</th>
