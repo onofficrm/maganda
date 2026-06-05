@@ -11,7 +11,7 @@ $site_name = function_exists('g5site_cfg') ? g5site_cfg('site_name', '마간다T
 $api_url = G5_PLUGIN_URL . '/maganda/api/application.php';
 $thanks_url = G5_URL . '/page/inquiry-thanks.php';
 
-g5_page_start('방송회원 신청');
+g5_page_start('방송회원 신청', 'minimal');
 ?>
 <div class="page-template page-creator-apply">
     <header class="page-hero reveal">
@@ -75,4 +75,4 @@ g5_page_start('방송회원 신청');
     });
 })();
 </script>
-<?php g5_page_end(); ?>
+<?php g5_page_end('minimal'); ?>
