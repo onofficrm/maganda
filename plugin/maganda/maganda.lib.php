@@ -252,10 +252,12 @@ function maganda_creator_to_card_item($row)
         'followers' => maganda_format_points($row['mc_followers']),
         'points' => maganda_format_points($row['mc_total_points']),
         'image' => $live['profile'],
+        'profile' => $live['profile'],
         'category' => $live['category'],
         'stream_url' => $live['stream_url'],
         'youtube_id' => $live['youtube_id'],
         'is_live' => $live['is_live'],
+        'isLive' => $live['is_live'],
     );
 }
 

@@ -577,44 +577,6 @@ if (!function_exists('onoff_builder_resolve_import_index_file')) {
     }
 }
 
-if (!function_exists('onoff_builder_render_import_page')) {
-    function onoff_builder_render_import_page($id)
-    {
-        $raw_id = trim((string) $id);
-        if ($raw_id === '') {
-            onoff_builder_render_page_error('page.php?id=프로젝트ID 형태로 접근해 주세요.');
-        }
-
-        if (!onoff_builder_validate_project_id($raw_id)) {
-            onoff_builder_render_page_error('유효하지 않은 프로젝트 ID입니다.');
-        }
-
-        $id = onoff_builder_sanitize_project_id($raw_id);
-        $meta = onoff_builder_get_import($id);
-        if (!$meta) {
-            onoff_builder_render_page_error('등록되지 않은 프로젝트입니다. 관리자 화면에서 업로드 여부를 확인해 주세요.');
-        }
-
-        $entry = isset($meta['entry']) && $meta['entry'] !== '' ? $meta['entry'] : 'index.html';
-        $index_file = onoff_builder_resolve_import_index_file($id, $entry);
-        if ($index_file === '') {
-            onoff_builder_render_page_error('index.html 파일을 찾을 수 없습니다. ZIP을 다시 업로드해 주세요.');
-        }
-
-        $html = @file_get_contents($index_file);
-        if ($html === false || $html === '') {
-            onoff_builder_render_page_error('HTML 파일을 읽을 수 없습니다.');
-        }
-
-        $html = onoff_builder_remove_base_tags($html);
-        $html = onoff_builder_rewrite_asset_paths($html, $id, $entry);
-
-        header('Content-Type: text/html; charset=utf-8');
-        echo $html;
-        exit;
-    }
-}
-
 if (!function_exists('onoff_builder_stub_message')) {
     function onoff_builder_stub_message($title, $message)
     {

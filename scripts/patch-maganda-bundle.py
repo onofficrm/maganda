@@ -39,7 +39,7 @@ ROOT_P_NEW = (
 ZP_HEAD_OLD = 'function Zp({onNavigate:o,lang:F}){const[S,v]=Pl.useState("daily");return c.jsxs("div",{className:"w-full",children:['
 ZP_HEAD_NEW = (
     'function Zp({onNavigate:o,lang:F}){const[S,v]=Pl.useState("daily"),[liveData,setLiveData]=Pl.useState(Xp),'
-    '[creatorData,setCreatorData]=Pl.useState(Qp),[rankData,setRankData]=Pl.useState({daily:kp,weekly:kp,monthly:kp});'
+    '[creatorData,setCreatorData]=Pl.useState(Qp),[rankData,setRankData]=Pl.useState({daily:Lp,weekly:Lp,monthly:Lp});'
     'Pl.useEffect(()=>{fetch(mgApi("home.php")).then(r=>r.json()).then(d=>{if(!d||!d.ok)return;'
     'if(d.live&&d.live.length)setLiveData(d.live);if(d.creators&&d.creators.length)setCreatorData(d.creators);'
     'if(d.ranking)setRankData(d.ranking)}).catch(()=>{})},[]);'
@@ -145,7 +145,7 @@ def patch_root_and_pages(data):
     zp = data[zp_s:zp_e]
     zp = zp.replace("Xp.map", "liveData.map", 1)
     zp = zp.replace("Qp.map", "creatorData.map", 1)
-    zp = zp.replace("kp.map", "(rankData[S]||kp).map", 1)
+    zp = zp.replace("Lp.map", "(rankData[S]||Lp).map", 1)
     zp = zp.replace('onClick:()=>o("room"),className:"px-8', 'onClick:()=>o("room",liveData[0]||null),className:"px-8', 1)
     zp = zp.replace('onClick:()=>o("room"),children:[c.jsxs("div",{className:"relat', 'onClick:()=>o("room",f),children:[c.jsxs("div",{className:"relat', 1)
     zp = zp.replace(
