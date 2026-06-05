@@ -1,0 +1,8 @@
+@charset "utf-8";
+@import url("../../../../css/g5b-member.css");
+
+/* Skin-specific overrides (keep minimal) */
+
+.mg-auth .tooltip {
+  font-size: 0.75rem;
+}

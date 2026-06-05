@@ -65,3 +65,14 @@ if (!function_exists('onoff_builder_render_filter_html')) {
         return $html;
     }
 }
+
+if (function_exists('g5site_cfg_bool') && g5site_cfg_bool('member_skin_maganda', true)) {
+    $maganda_member_skin = 'maganda';
+    $mg_skin_base = G5_IS_MOBILE ? G5_MOBILE_PATH : G5_PATH;
+    $mg_skin_url_base = G5_IS_MOBILE ? G5_MOBILE_URL : G5_URL;
+    $mg_member_skin_path = $mg_skin_base . '/' . G5_SKIN_DIR . '/member/' . $maganda_member_skin;
+    if (is_dir($mg_member_skin_path)) {
+        $member_skin_path = $mg_member_skin_path;
+        $member_skin_url = $mg_skin_url_base . '/' . G5_SKIN_DIR . '/member/' . $maganda_member_skin;
+    }
+}

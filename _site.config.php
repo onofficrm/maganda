@@ -69,6 +69,8 @@ $site_config = array(
     'map_placeholder_desc'      => '_site.config.php에서 google_maps_api_key 값을 입력하면 지도가 표시됩니다.',
     /* Maganda TV 홈/방송 API (plugin/maganda) */
     'maganda_builtin'           => true,
+    /* 회원 로그인·가입 스킨 (skin/member/maganda) */
+    'member_skin_maganda'       => true,
     'icrm_builtin'              => true,
     'icrm_site_base_url'        => '',  /* 비우면 G5_DOMAIN/G5_URL. CDN 등 예외 시만 https://고객도메인 */
     'icrm_secret_token'         => '',  /* 비우면 data/icrm.config.php(자동 생성) 사용 */
