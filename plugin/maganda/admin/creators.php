@@ -202,7 +202,7 @@ include_once G5_ADMIN_PATH . '/admin.head.php';
         <li><b>슬러그</b> — 영문 소문자 ID (예: jolie). URL/API 식별에 사용됩니다.</li>
         <li><b>이름</b> — 방송회원 표시 이름</li>
         <li><b>방송 제목</b> — 홈 화면 라이브 카드 제목</li>
-        <li><b>YouTube 라이브 URL</b> — LIVE ON일 때 필수 (예: watch?v=Jav-pWT70rg)</li>
+        <li><b>YouTube 라이브 URL</b> — LIVE ON일 때 필수 (예: youtu.be/fLSzzGgTUXw)</li>
         <li><b>LIVE ON + 사용</b> — 두 옵션을 모두 켜야 홈 “지금 라이브 중”에 노출됩니다.</li>
     </ul>
 </div>

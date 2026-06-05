@@ -3,9 +3,9 @@ if (!defined('_GNUBOARD_')) {
     exit;
 }
 
-define('MAGANDA_VERSION', '1.0.1');
+define('MAGANDA_VERSION', '1.0.2');
 define('MAGANDA_SAMPLE_LIVE_SLUG', 'jolie');
-define('MAGANDA_SAMPLE_LIVE_URL', 'https://www.youtube.com/watch?v=Jav-pWT70rg');
+define('MAGANDA_SAMPLE_LIVE_URL', 'https://youtu.be/fLSzzGgTUXw?si=DjmNAvx34JDfxUcE');
 
 function maganda_table($name)
 {
@@ -144,8 +144,9 @@ function maganda_ensure_sample_live_if_empty()
 
     $table = maganda_table('creator');
     $row = sql_fetch(" SELECT * FROM `{$table}` WHERE `mc_slug` = '" . sql_escape_string(MAGANDA_SAMPLE_LIVE_SLUG) . "' ");
+    $expected_id = maganda_youtube_id_from_url(MAGANDA_SAMPLE_LIVE_URL);
 
-    if (!$row || maganda_stream_video_id($row) === '') {
+    if (!$row || maganda_stream_video_id($row) !== $expected_id) {
         maganda_apply_sample_live_creator();
     }
 }
@@ -159,7 +160,7 @@ function maganda_seed_defaults()
     $count = sql_fetch(" SELECT COUNT(*) AS cnt FROM `{$creator_table}` ");
     if ((int) $count['cnt'] === 0) {
         $creators = array(
-            array('jolie', 'Jolie (졸리)', '보라카이 해변 실시간 LIVE', '여행', '마간다TV 샘플 라이브 방송', MAGANDA_SAMPLE_LIVE_URL, 'Jav-pWT70rg', 1, 1250, 12400, 1200000, 1),
+            array('jolie', 'Jolie (졸리)', '보라카이 해변 실시간 LIVE', '여행', '마간다TV 샘플 라이브 방송', MAGANDA_SAMPLE_LIVE_URL, 'fLSzzGgTUXw', 1, 1250, 12400, 1200000, 1),
             array('maria', 'Maria', '마닐라 맛집 투어 브이로그 & 먹방 🍜', '먹방', '마닐라 현지 맛집 라이브', '', '', 0, 840, 8200, 125000, 2),
             array('christine', '크리스틴', 'K-POP 댄스 커버 라이브 🎵', '댄스', 'K-POP 댄스 커버 전문', '', '', 1, 3200, 24500, 110000, 3),
         );
