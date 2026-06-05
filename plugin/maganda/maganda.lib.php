@@ -196,6 +196,87 @@ function maganda_format_rank_points($num)
     return number_format((int) $num);
 }
 
+function maganda_youtube_id_from_url($url)
+{
+    $url = trim((string) $url);
+    if ($url === '') {
+        return '';
+    }
+
+    if (preg_match('/^[a-zA-Z0-9_-]{11}$/', $url)) {
+        return $url;
+    }
+
+    $patterns = array(
+        '#(?:https?://)?(?:www\.|m\.)?youtube\.com/watch\?(?:[^&\s]*&)*v=([a-zA-Z0-9_-]{11})#i',
+        '#(?:https?://)?(?:www\.|m\.)?youtube\.com/watch\?v=([a-zA-Z0-9_-]{11})#i',
+        '#(?:https?://)?youtu\.be/([a-zA-Z0-9_-]{11})#i',
+        '#(?:https?://)?(?:www\.)?youtube\.com/embed/([a-zA-Z0-9_-]{11})#i',
+        '#(?:https?://)?(?:www\.)?youtube\.com/shorts/([a-zA-Z0-9_-]{11})#i',
+        '#(?:https?://)?(?:www\.)?youtube\.com/live/([a-zA-Z0-9_-]{11})#i',
+    );
+
+    foreach ($patterns as $pattern) {
+        if (preg_match($pattern, $url, $matches)) {
+            return $matches[1];
+        }
+    }
+
+    return '';
+}
+
+function maganda_youtube_embed_url($video_id, $autoplay = true)
+{
+    $video_id = maganda_youtube_id_from_url($video_id);
+    if ($video_id === '') {
+        return '';
+    }
+
+    $params = array('rel=0', 'modestbranding=1', 'playsinline=1');
+    if ($autoplay) {
+        $params[] = 'autoplay=1';
+        $params[] = 'mute=1';
+    }
+
+    return 'https://www.youtube.com/embed/' . $video_id . '?' . implode('&', $params);
+}
+
+function maganda_normalize_stream_fields(array $fields)
+{
+    $url = isset($fields['mc_stream_url']) ? trim($fields['mc_stream_url']) : '';
+    $id = isset($fields['mc_youtube_id']) ? trim($fields['mc_youtube_id']) : '';
+    $parsed = maganda_youtube_id_from_url($url);
+
+    if ($parsed === '' && $id !== '') {
+        $parsed = maganda_youtube_id_from_url($id);
+    }
+
+    if ($parsed !== '') {
+        $fields['mc_youtube_id'] = $parsed;
+        if ($url === '' || !preg_match('#youtube#i', $url)) {
+            $fields['mc_stream_url'] = 'https://www.youtube.com/watch?v=' . $parsed;
+        }
+    } else {
+        $fields['mc_youtube_id'] = '';
+    }
+
+    return $fields;
+}
+
+function maganda_stream_video_id($row)
+{
+    if (!$row || !is_array($row)) {
+        return '';
+    }
+
+    $id = isset($row['mc_youtube_id']) ? trim($row['mc_youtube_id']) : '';
+    if ($id !== '' && preg_match('/^[a-zA-Z0-9_-]{11}$/', $id)) {
+        return $id;
+    }
+
+    return maganda_youtube_id_from_url(isset($row['mc_stream_url']) ? $row['mc_stream_url'] : '');
+}
+
 function maganda_get_creator_row($id_or_slug)
 {
     $table = maganda_table('creator');
@@ -219,6 +300,7 @@ function maganda_creator_to_live_item($row)
 
     $thumb = $row['mc_cover'] !== '' ? $row['mc_cover'] : 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=800&q=80';
     $profile = $row['mc_avatar'] !== '' ? $row['mc_avatar'] : 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&q=80';
+    $youtube_id = maganda_stream_video_id($row);
 
     return array(
         'id' => (int) $row['mc_id'],
@@ -231,7 +313,8 @@ function maganda_creator_to_live_item($row)
         'thumb' => $thumb,
         'profile' => $profile,
         'stream_url' => $row['mc_stream_url'],
-        'youtube_id' => $row['mc_youtube_id'],
+        'youtube_id' => $youtube_id,
+        'embed_url' => maganda_youtube_embed_url($youtube_id),
         'intro' => $row['mc_intro'],
         'is_live' => (int) $row['mc_is_live'] === 1,
     );
@@ -256,6 +339,7 @@ function maganda_creator_to_card_item($row)
         'category' => $live['category'],
         'stream_url' => $live['stream_url'],
         'youtube_id' => $live['youtube_id'],
+        'embed_url' => $live['embed_url'],
         'is_live' => $live['is_live'],
         'isLive' => $live['is_live'],
     );
@@ -281,6 +365,7 @@ function maganda_creator_to_room($row)
         'followers' => (int) $row['mc_followers'],
         'stream_url' => $live['stream_url'],
         'youtube_id' => $live['youtube_id'],
+        'embed_url' => $live['embed_url'],
         'is_live' => $live['is_live'],
     );
 }

@@ -13,6 +13,10 @@ def main():
         errors.append("missing mgT")
     if "function mgGo(" not in data:
         errors.append("missing mgGo")
+    if "function mgYoutubeEmbedUrl(" not in data:
+        errors.append("missing mgYoutubeEmbedUrl")
+    if "function mgCreatorPayload(" not in data:
+        errors.append("missing mgCreatorPayload")
     if "mgApi(" not in data:
         errors.append("missing mgApi")
     for name in ["}const Xp=", "}const Vp=", "const Vp=", "const Kp="]:

@@ -18,8 +18,22 @@ MG_BOOT = (
     'function mgScroll(id){if(!id||id==="home"){window.scrollTo({top:0,behavior:"smooth"});return}const el=document.getElementById(id);if(el)el.scrollIntoView({behavior:"smooth"})}'
     'function mgApi(p){const c=mgCfg();return (c.api||"/plugin/maganda/api/")+p}'
     'function mgRequireLogin(){const c=mgCfg();if(c.member&&c.member.logged)return!0;mgGo("login");return!1}'
-    'function mgYoutubeId(u){if(!u)return"";if(/^[a-zA-Z0-9_-]{11}$/.test(u))return u;const m=String(u).match(/(?:v=|youtu\\.be\\/|embed\\/)([a-zA-Z0-9_-]{11})/);return m?m[1]:""}'
+    'function mgYoutubeId(u){if(!u)return"";u=String(u).trim();if(/^[a-zA-Z0-9_-]{11}$/.test(u))return u;const p=[/(?:v=|\\/vi\\/|youtu\\.be\\/|embed\\/|shorts\\/|live\\/)([a-zA-Z0-9_-]{11})/,/\\?[^#]*v=([a-zA-Z0-9_-]{11})/];for(const r of p){const m=u.match(r);if(m)return m[1]}return""}'
+    'function mgYoutubeEmbedUrl(u){const id=mgYoutubeId(u);return id?"https://www.youtube.com/embed/"+id+"?autoplay=1&mute=1&rel=0&modestbranding=1&playsinline=1":""}'
+    'function mgCreatorPayload(item){if(!item)return null;return{id:item.id,slug:item.slug,name:item.name||item.streamer,title:item.title,subtitle:item.intro||item.subtitle,avatar:item.avatar||item.profile||item.image,cover:item.cover||item.thumb,stream_url:item.stream_url,youtube_id:item.youtube_id||mgYoutubeId(item.stream_url),embed_url:item.embed_url||mgYoutubeEmbedUrl(item.youtube_id||item.stream_url),is_live:!!(item.is_live||item.isLive)}}'
     'function mgGiftKey(n){return ({하트:"heart",커피:"coffee",꽃다발:"flower",왕관:"crown"})[n]||"heart"}'
+)
+
+JP_EMBED_OLD = 'mc&&mgYoutubeId(mc.youtube_id||mc.stream_url)?c.jsx("iframe",{src:"https://www.youtube.com/embed/"+mgYoutubeId(mc.youtube_id||mc.stream_url)+"?autoplay=1&mute=1",className:"absolute inset-0 w-full h-full",allow:"autoplay; encrypted-media",allowFullScreen:!0}):c.jsx("img",{src:(mc&&mc.cover)||"https://images.unsplash.com/photo-1540202404-b71114227fe1?w=1600&q=80",className:"absolute inset-0 w-full h-full object-cover opacity-60",alt:"broadcast"})'
+JP_EMBED_NEW = (
+    '(()=>{const yid=mc&&mgYoutubeId(mc.youtube_id||mc.stream_url||mc.embed_url);'
+    'if(!yid)return c.jsxs("div",{className:"absolute inset-0 w-full h-full flex items-center justify-center bg-black/80 text-white p-6 text-center",children:[c.jsx("img",{src:(mc&&mc.cover)||"https://images.unsplash.com/photo-1540202404-b71114227fe1?w=1600&q=80",className:"absolute inset-0 w-full h-full object-cover opacity-40",alt:"offline"}),c.jsxs("div",{className:"relative z-10",children:[c.jsx("p",{className:"text-lg font-bold mb-2",children:mgT("방송 준비중",F)}),c.jsx("p",{className:"text-sm text-white/80",children:mgT("관리자에서 YouTube 라이브 URL을 등록해 주세요.",F)})]})]});'
+    'return c.jsxs("div",{className:"absolute inset-0 w-full h-full bg-black",children:['
+    'c.jsx("iframe",{src:mgYoutubeEmbedUrl(yid),className:"absolute inset-0 w-full h-full border-0",allow:"autoplay; encrypted-media; picture-in-picture; fullscreen",allowFullScreen:!0,title:(mc&&mc.name)||"YouTube Live"}),'
+    'mc.is_live?c.jsxs("div",{className:"absolute top-3 left-3 z-20 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-600 text-white text-xs font-bold shadow-lg",children:[c.jsx("span",{className:"relative flex h-2 w-2",children:c.jsx("span",{className:"animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"})}),"LIVE"]}):'
+    'c.jsx("div",{className:"absolute top-3 left-3 z-20 px-3 py-1.5 rounded-full bg-black/60 text-white text-xs font-medium",children:mgT("녹화/VOD",F)}),'
+    'c.jsx("a",{href:(mc&&mc.stream_url)||("https://www.youtube.com/watch?v="+yid),target:"_blank",rel:"noopener noreferrer",className:"absolute top-3 right-3 z-20 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-medium backdrop-blur",children:"YouTube"})'
+    ']})})()'
 )
 
 ROOT_P_OLD = (
@@ -113,11 +127,16 @@ YP_REPLACEMENTS = [
 
 def inject_mg_boot(data):
     marker = 'const Ds=[{code:"ko",label:"한국어"}'
-    if "function mgGo(" in data:
-        return data
     if "function mgT(" not in data:
-        data = data.replace(marker, mod.I18N_BOOT + marker, 1)
-    return data.replace(marker, MG_BOOT + marker, 1)
+        data = data.replace(marker, mod.I18N_BOOT + MG_BOOT + marker, 1)
+        return data
+    start = data.find('function mgCfg(){')
+    end = data.find(marker, start)
+    if start >= 0 and end > start:
+        return data[:start] + MG_BOOT + data[end:]
+    if "function mgGo(" not in data:
+        return data.replace(marker, MG_BOOT + marker, 1)
+    return data
 
 
 def patch_navigation(data):
@@ -146,8 +165,10 @@ def patch_root_and_pages(data):
     zp = zp.replace("Xp.map", "liveData.map", 1)
     zp = zp.replace("Qp.map", "creatorData.map", 1)
     zp = zp.replace("Lp.map", "(rankData[S]||Lp).map", 1)
-    zp = zp.replace('onClick:()=>o("room"),className:"px-8', 'onClick:()=>o("room",liveData[0]||null),className:"px-8', 1)
-    zp = zp.replace('onClick:()=>o("room"),children:[c.jsxs("div",{className:"relat', 'onClick:()=>o("room",f),children:[c.jsxs("div",{className:"relat', 1)
+    zp = zp.replace('onClick:()=>o("room"),className:"px-8', 'onClick:()=>o("room",mgCreatorPayload(liveData[0]||null)),className:"px-8', 1)
+    zp = zp.replace('onClick:()=>o("room"),children:[c.jsxs("div",{className:"relat', 'onClick:()=>o("room",mgCreatorPayload(f)),children:[c.jsxs("div",{className:"relat', 1)
+    zp = zp.replace('onClick:()=>o("room",liveData[0]||null)', 'onClick:()=>o("room",mgCreatorPayload(liveData[0]||null))', 1)
+    zp = zp.replace('onClick:()=>o("room",f)', 'onClick:()=>o("room",mgCreatorPayload(f))', 1)
     zp = zp.replace(
         'c.jsx("section",{className:"py-20 bg-slate-50 px-4",children:c.jsxs("div",{className:"max-w-7xl mx-auto flex flex-col gap-10",children:[c.jsxs("div",{className:"flex flex-col md:flex-row justify-between items-end gap-4",children:[c.jsxs("div",{children:[c.jsx("h2",{className:"text-3xl font-bold text-gray-900 tracking-tight",children:mgT("지금 라이브 중",F)',
         'c.jsx("section",{id:"mg-live",className:"py-20 bg-slate-50 px-4",children:c.jsxs("div",{className:"max-w-7xl mx-auto flex flex-col gap-10",children:[c.jsxs("div",{className:"flex flex-col md:flex-row justify-between items-end gap-4",children:[c.jsxs("div",{children:[c.jsx("h2",{className:"text-3xl font-bold text-gray-900 tracking-tight",children:mgT("지금 라이브 중",F)',
@@ -166,6 +187,11 @@ def patch_root_and_pages(data):
     zp = zp.replace(
         'c.jsxs("section",{className:"py-24 relative overflow-hidden bg-slate-900 px-4",children:',
         'c.jsxs("section",{id:"mg-creators",className:"py-24 relative overflow-hidden bg-slate-900 px-4",children:',
+        1,
+    )
+    zp = zp.replace(
+        'c.jsx("button",{className:"w-full py-2.5 rounded-xl border border-gray-200 text-sm font-bold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-colors",children:mgT("프로필 보기",F)})',
+        'c.jsx("button",{type:"button",className:"w-full py-2.5 rounded-xl border border-gray-200 text-sm font-bold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-colors",onClick:()=>o("room",mgCreatorPayload(f)),children:mgT("라이브 시청",F)})',
         1,
     )
     zp = zp.replace(
@@ -190,10 +216,12 @@ def patch_root_and_pages(data):
         'c.jsx("button",{type:"button",className:"text-[10px] font-bold bg-pink-50 text-pink-600 px-2 py-1 rounded",onClick:()=>mgGo("point_charge"),children:mgT("충전",F)})',
         1,
     )
-    if "youtube.com/embed" not in jp:
+    if JP_EMBED_OLD in jp:
+        jp = jp.replace(JP_EMBED_OLD, JP_EMBED_NEW, 1)
+    elif "youtube.com/embed" not in jp:
         jp = jp.replace(
             'c.jsx("img",{src:"https://images.unsplash.com/photo-1540202404-b71114227fe1?w=1600&q=80",className:"absolute inset-0 w-full h-full object-cover opacity-60",alt:"broadcast"})',
-            'mc&&mgYoutubeId(mc.youtube_id||mc.stream_url)?c.jsx("iframe",{src:"https://www.youtube.com/embed/"+mgYoutubeId(mc.youtube_id||mc.stream_url)+"?autoplay=1&mute=1",className:"absolute inset-0 w-full h-full",allow:"autoplay; encrypted-media",allowFullScreen:!0}):c.jsx("img",{src:(mc&&mc.cover)||"https://images.unsplash.com/photo-1540202404-b71114227fe1?w=1600&q=80",className:"absolute inset-0 w-full h-full object-cover opacity-60",alt:"broadcast"})',
+            JP_EMBED_NEW,
             1,
         )
     return data[:jp_s] + jp + data[jp_e:]
