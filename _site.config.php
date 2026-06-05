@@ -9,31 +9,31 @@ if (!defined('_GNUBOARD_')) {
 
 $site_config = array(
     'site_name'           => '마간다TV',
-    'site_desc'           => '필리핀 라이브 스트리밍 플랫폼',
+    'site_desc'           => '필리핀 라이브 스트리밍·후원 플랫폼',
     'home_builder_bridge_id' => 'maganda',
-    'company_name'        => '회사명',
+    'company_name'        => '마간다TV Corp.',
     'ceo_name'            => '대표자명',
     'business_no'         => '000-00-00000',
     'phone'               => '010-0000-0000',
     'kakao_url'           => '#',
-    'email'               => 'help@example.com',
-    'address'             => '주소를 입력하세요',
+    'email'               => 'help@maganda.tv',
+    'address'             => 'Philippines / Seoul Office',
     'primary_color'       => '#2563eb',
     'secondary_color'     => '#64748b',
     'logo_path'           => '/img/logo/logo.svg',
     'og_image'            => '/img/common/og-image.jpg',
     /* SEO (components/seo-meta.php) */
-    'seo_title'           => '',
-    'seo_description'     => '',
+    'seo_title'           => '마간다TV | 필리핀 라이브 후원 플랫폼',
+    'seo_description'     => '필리핀 크리에이터의 라이브를 시청하고 포인트 선물로 응원하세요. Maganda TV.',
     'main_keyword'        => '',
     'sub_keywords'        => '',
     'robots'              => 'index,follow',
     'consultation_text'   => '상담문의',
-    'footer_desc'         => '고객의 성장을 돕는 웹사이트 제작 베이스입니다.',
+    'footer_desc'         => '필리핀 크리에이터와 함께하는 프리미엄 라이브 후원 플랫폼 마간다TV.',
     /* 문의 폼 → inquiry 게시판 (proc/inquiry-submit.php) */
     'inquiry_bo_table'        => 'inquiry',
     'inquiry_notify_enabled'  => true,
-    'inquiry_notify_email'    => 'admin@example.com',  /* 운영 시 실제 수신 주소로 변경 */
+    'inquiry_notify_email'    => 'help@maganda.tv',  /* 운영 시 실제 수신 주소로 변경 */
     'inquiry_notify_name'     => '관리자',
     /* 텔레그램 알림 — 운영 시 토큰·채팅 ID 입력 후 enabled true */
     'inquiry_notify_telegram_enabled'  => false,
@@ -67,7 +67,8 @@ $site_config = array(
     'map_unit'                  => 'km',
     'map_placeholder_title'     => 'Google Maps API 키가 설정되지 않았습니다.',
     'map_placeholder_desc'      => '_site.config.php에서 google_maps_api_key 값을 입력하면 지도가 표시됩니다.',
-    /* iCRM final_url (lib/icrm.lib.php, /icrm/final-url.php) — 사이트 복사마다 토큰만 다름, 도메인은 G5_URL 자동 */
+    /* Maganda TV 홈/방송 API (plugin/maganda) */
+    'maganda_builtin'           => true,
     'icrm_builtin'              => true,
     'icrm_site_base_url'        => '',  /* 비우면 G5_DOMAIN/G5_URL. CDN 등 예외 시만 https://고객도메인 */
     'icrm_secret_token'         => '',  /* 비우면 data/icrm.config.php(자동 생성) 사용 */

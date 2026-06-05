@@ -4,6 +4,10 @@
     "name": "마간다TV 메인",
     "path": "maganda",
     "entry": "index.html",
+    "enabled": true,
+    "mode": "standalone",
+    "seo_title": "마간다TV | 필리핀 라이브 후원 플랫폼",
+    "seo_description": "필리핀 크리에이터의 라이브를 시청하고 포인트 선물로 응원하세요.",
     "created_at": "2026-06-04 23:30:00"
   },
   {
@@ -11,6 +15,7 @@
     "name": "[샘플] 랜딩 페이지 (비활성)",
     "path": "sample-landing",
     "entry": "index.html",
+    "enabled": false,
     "created_at": "2026-01-01 00:00:00"
   }
 ]
