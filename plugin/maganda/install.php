@@ -1,6 +1,6 @@
 <?php
 define('G5_IS_ADMIN', true);
-require_once dirname(__DIR__, 3) . '/common.php';
+require_once dirname(__DIR__, 2) . '/common.php';
 
 if ($is_admin != 'super') {
     alert('최고관리자만 접근 가능합니다.', G5_URL);
